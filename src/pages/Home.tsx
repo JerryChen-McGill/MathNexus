@@ -222,7 +222,7 @@ export default function Home() {
               </span>
             </Link>
             <Link
-              to="/skilltree"
+              to="/profile#skills"
               className="px-10 py-4 border border-[var(--black-4)] rounded-lg font-medium text-[var(--black-6)] hover:text-white hover:border-[var(--accent)]/50 transition-all duration-300"
             >
               查看技能树
@@ -402,7 +402,7 @@ export default function Home() {
               </div>
 
               <Link
-                to="/skilltree"
+                to="/profile#skills"
                 className="inline-flex items-center gap-2 px-8 py-3 bg-[var(--accent)] rounded-lg font-medium text-white hover:bg-[var(--accent-dark)] transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
               >
                 <Star size={18} />

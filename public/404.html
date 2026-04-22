@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MathNexus</title>
+    <script>
+      // GitHub Pages SPA fallback: redirect to index with encoded path.
+      // pathSegmentsToKeep = 1 for "/MathNexus/" repository base path.
+      const pathSegmentsToKeep = 1;
+      const { location: loc } = window;
+      const repoPath = loc.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/');
+      const routePath = loc.pathname
+        .slice(1)
+        .split('/')
+        .slice(pathSegmentsToKeep)
+        .join('/')
+        .replace(/&/g, '~and~');
+      const search = loc.search ? `&${loc.search.slice(1).replace(/&/g, '~and~')}` : '';
+      const target = `${loc.protocol}//${loc.hostname}${loc.port ? `:${loc.port}` : ''}${repoPath}/?/${routePath}${search}${loc.hash}`;
+      loc.replace(target);
+    </script>
+  </head>
+  <body></body>
+</html>

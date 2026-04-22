@@ -1,15 +1,76 @@
 import { useGameStore } from '@/store/gameStore';
 import { skillBranches } from '@/data/games';
-import { Star, Trophy, Clock, Gamepad2, TrendingUp, Settings, RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import type { SkillNode } from '@/data/games';
+import { Star, Trophy, Clock, Gamepad2, TrendingUp, Settings, RotateCcw, ChevronDown, ChevronUp, Lock, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+
+const SKILL_LEVEL_GAME_REQUIREMENTS = [1, 3, 5, 7, 10] as const;
+const SKILL_LEVEL_POINT_FACTORS = [1, 3, 6, 10, 15] as const;
+const SKILL_POINT_REQUIREMENT_BASE = 20;
+
+type ProgressLookup = Record<string, { highestLevel: number }>;
+
+const getRequiredGameLevel = (skillLevel: number): number => (
+  SKILL_LEVEL_GAME_REQUIREMENTS[
+    Math.min(skillLevel - 1, SKILL_LEVEL_GAME_REQUIREMENTS.length - 1)
+  ]
+);
+
+const getRequiredSkillPoints = (node: SkillNode, skillLevel: number): number => (
+  node.cost
+  * SKILL_POINT_REQUIREMENT_BASE
+  * SKILL_LEVEL_POINT_FACTORS[
+    Math.min(skillLevel - 1, SKILL_LEVEL_POINT_FACTORS.length - 1)
+  ]
+);
+
+const getHighestCompletedLevel = (node: SkillNode, gameProgress: ProgressLookup): number => {
+  if (node.gameIds.length === 0) return 0;
+
+  return node.gameIds.reduce((highest, gameId) => {
+    const unlockedLevel = gameProgress[gameId]?.highestLevel ?? 1;
+    return Math.max(highest, Math.max(0, unlockedLevel - 1));
+  }, 0);
+};
+
+const getNextRequirement = (node: SkillNode, gameProgress: ProgressLookup) => {
+  if (node.level >= node.maxLevel) return null;
+
+  const nextLevel = node.level + 1;
+  const requiredGameLevel = getRequiredGameLevel(nextLevel);
+  const requiredSkillPoints = getRequiredSkillPoints(node, nextLevel);
+  const highestCompletedLevel = getHighestCompletedLevel(node, gameProgress);
+
+  return {
+    nextLevel,
+    requiredGameLevel,
+    requiredSkillPoints,
+    highestCompletedLevel,
+  };
+};
 
 export default function Profile() {
   const {
-    playerName, totalScore, skillPoints, totalSkillPointsEarned,
-    gameProgress, stats, settings, updateSettings, resetProgress,
-    skillNodes: nodes, games,
+    playerName,
+    totalScore,
+    skillPoints,
+    totalSkillPointsEarned,
+    gameProgress,
+    stats,
+    settings,
+    updateSettings,
+    resetProgress,
+    skillNodes: nodes,
+    games,
   } = useGameStore();
+
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [branchFilter, setBranchFilter] = useState<string>('all');
+  const [expandedBranches, setExpandedBranches] = useState<Record<string, boolean>>({});
+  const [activeSkillId, setActiveSkillId] = useState<string | null>(null);
+
+  const activeSkill = nodes.find(node => node.id === activeSkillId);
+  const gameNameMap = useMemo(() => new Map(games.map(game => [game.id, game.name])), [games]);
 
   const unlockedSkills = nodes.filter(n => n.unlocked).length;
   const totalGames = games.length;
@@ -17,11 +78,51 @@ export default function Profile() {
   const totalStars = games.reduce((sum, g) => sum + g.totalStars, 0);
   const maxStars = totalGames * 30; // 10 levels * 3 stars per game
 
+  const visibleBranches = branchFilter === 'all'
+    ? skillBranches
+    : skillBranches.filter(branch => branch.id === branchFilter);
+
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     return `${h}h ${m}m`;
   };
+
+  const toggleBranch = (branchId: string) => {
+    setExpandedBranches(prev => ({
+      ...prev,
+      [branchId]: !prev[branchId],
+    }));
+  };
+
+  const getNodeStatus = (node: SkillNode) => {
+    if (node.unlocked) return 'unlocked';
+    if (node.unlockable) return 'unlockable';
+    return 'locked';
+  };
+
+  useEffect(() => {
+    if (!activeSkillId) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveSkillId(null);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeSkillId]);
+
+  useEffect(() => {
+    if (!activeSkillId) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [activeSkillId]);
 
   return (
     <div className="pt-14 min-h-screen">
@@ -152,7 +253,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Middle - Game Progress */}
+          {/* Right - Achievement + Skill Tree */}
           <div className="lg:col-span-2 space-y-6">
             {/* Overall Stats */}
             <div className="liquid-glass rounded-2xl p-6">
@@ -185,8 +286,8 @@ export default function Profile() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--purple)]/10 flex items-center justify-center">
-                    <Clock size={18} className="text-[var(--purple)]" />
+                  <div className="w-10 h-10 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center">
+                    <Clock size={18} className="text-[var(--accent)]" />
                   </div>
                   <div>
                     <div className="font-mono-data text-lg text-white">{stats.totalGamesPlayed}</div>
@@ -196,77 +297,207 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Skill Branch Progress */}
-            <div className="liquid-glass rounded-2xl p-6">
-              <h3 className="font-semibold text-white mb-4">技能分支进度</h3>
-              <div className="space-y-3">
-                {skillBranches.map(branch => {
-                  const branchNodes = nodes.filter(n => n.branch === branch.name);
-                  const unlocked = branchNodes.filter(n => n.unlocked).length;
-                  const percent = (unlocked / branchNodes.length) * 100;
-                  return (
-                    <div key={branch.id}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: branch.color }} />
-                          <span className="text-sm text-[var(--black-5)]">{branch.name}</span>
-                        </div>
-                        <span className="text-xs text-[var(--black-6)]">{unlocked}/{branchNodes.length}</span>
-                      </div>
-                      <div className="h-2 bg-[var(--black-3)] rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${percent}%`, backgroundColor: branch.color }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Skill Tree + Branch Progress */}
+            <section className="liquid-glass rounded-2xl p-6" id="skills">
+              <h3 className="font-semibold text-white mb-4">技能分支与技能树</h3>
 
-            {/* Game Progress List */}
-            <div className="liquid-glass rounded-2xl p-6">
-              <h3 className="font-semibold text-white mb-4">游戏进度</h3>
+              {/* Filter */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-4">
+                <button
+                  onClick={() => setBranchFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
+                    branchFilter === 'all'
+                      ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                      : 'border-[var(--black-3)] text-[var(--black-6)] hover:text-white'
+                  }`}
+                >
+                  全部
+                </button>
+                {skillBranches.map(branch => (
+                  <button
+                    key={branch.id}
+                    onClick={() => setBranchFilter(branch.id)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border flex items-center gap-2 ${
+                      branchFilter === branch.id
+                        ? 'text-white'
+                        : 'border-[var(--black-3)] text-[var(--black-6)] hover:text-white'
+                    }`}
+                    style={branchFilter === branch.id ? { backgroundColor: `${branch.color}20`, borderColor: branch.color } : {}}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: branch.color }} />
+                    {branch.name}
+                  </button>
+                ))}
+              </div>
+
               <div className="space-y-3">
-                {games.map(game => {
-                  const prog = gameProgress[game.id];
-                  const completed = prog ? Object.values(prog.levels).filter(l => l.completed).length : 0;
-                  const stars = prog ? Object.values(prog.levels).reduce((sum, l) => sum + l.stars, 0) : 0;
+                {visibleBranches.map(branch => {
+                  const branchNodes = nodes.filter(node => node.branch === branch.name);
+                  const unlocked = branchNodes.filter(node => node.unlocked).length;
+                  const percent = branchNodes.length > 0 ? (unlocked / branchNodes.length) * 100 : 0;
+                  const expanded = !!expandedBranches[branch.id];
+
                   return (
-                    <div key={game.id} className="flex items-center gap-4 p-3 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)]">
-                      <img src={game.image} alt={game.name} className="w-12 h-12 rounded-lg object-cover" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-white">{game.name}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{
-                            backgroundColor: `${game.category === 'number' ? '#3B82F6' : game.category === 'geometry' ? '#10B981' : game.category === 'logic' ? '#8B5CF6' : game.category === 'strategy' ? '#F59E0B' : '#EC4899'}20`,
-                            color: game.category === 'number' ? '#3B82F6' : game.category === 'geometry' ? '#10B981' : game.category === 'logic' ? '#8B5CF6' : game.category === 'strategy' ? '#F59E0B' : '#EC4899',
-                          }}>
-                            {game.categoryLabel}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 h-1.5 bg-[var(--black-3)] rounded-full overflow-hidden">
-                            <div className="h-full bg-[var(--accent)] rounded-full transition-all" style={{ width: `${(completed / game.levels) * 100}%` }} />
+                    <div key={branch.id} className="rounded-xl border border-[var(--black-3)] bg-[var(--black-2)] overflow-hidden">
+                      <button
+                        onClick={() => toggleBranch(branch.id)}
+                        className="w-full p-4 text-left hover:bg-white/5 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: branch.color }} />
+                            <span className="text-sm font-medium text-white">{branch.name}</span>
                           </div>
-                          <div className="flex items-center gap-0.5 shrink-0">
-                            <Star size={10} className="text-[var(--gold)] fill-[var(--gold)]" />
-                            <span className="text-[10px] text-[var(--black-6)] font-mono-data">{stars}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-[var(--black-6)]">{unlocked}/{branchNodes.length}</span>
+                            {expanded ? (
+                              <ChevronUp size={14} className="text-[var(--black-6)]" />
+                            ) : (
+                              <ChevronDown size={14} className="text-[var(--black-6)]" />
+                            )}
                           </div>
                         </div>
-                      </div>
-                      <div className="text-xs text-[var(--black-6)] font-mono-data shrink-0">
-                        {completed}/{game.levels}
-                      </div>
+                        <div className="h-2 bg-[var(--black-3)] rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${percent}%`, backgroundColor: branch.color }}
+                          />
+                        </div>
+                      </button>
+
+                      {expanded && (
+                        <div className="px-4 pb-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {branchNodes.map(node => {
+                              const status = getNodeStatus(node);
+                              const nextRequirement = getNextRequirement(node, gameProgress as ProgressLookup);
+
+                              return (
+                                <button
+                                  key={node.id}
+                                  onClick={() => setActiveSkillId(node.id)}
+                                  className={`p-3 rounded-lg border text-left transition-all hover:scale-[1.01] ${
+                                    status === 'unlocked'
+                                      ? 'border-[var(--success)]/40 bg-[var(--success)]/8'
+                                      : status === 'unlockable'
+                                        ? 'border-[var(--accent)]/50 bg-[var(--accent)]/8'
+                                        : 'border-[var(--black-3)] bg-[var(--black-1)]'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 mb-1">
+                                    {status === 'unlocked' ? (
+                                      <Star size={14} className="text-[var(--gold)] fill-[var(--gold)]" />
+                                    ) : (
+                                      <Lock size={14} className="text-[var(--black-6)]" />
+                                    )}
+                                    <span className="text-sm font-medium text-white">{node.name}</span>
+                                  </div>
+                                  <div className="text-[11px] text-[var(--black-6)] mb-1">
+                                    Lv.{node.level}/{node.maxLevel}
+                                  </div>
+                                  <div className="text-xs text-[var(--black-6)] line-clamp-2 mb-2">
+                                    {node.description}
+                                  </div>
+                                  {nextRequirement ? (
+                                    <div className="text-[11px] text-[var(--black-6)]">
+                                      下一等级: 关卡≥{nextRequirement.requiredGameLevel} · 技能点≥{nextRequirement.requiredSkillPoints}
+                                    </div>
+                                  ) : (
+                                    <div className="text-[11px] text-[var(--gold)]">已满级</div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </div>
+
+      {/* Skill Modal */}
+      {activeSkill && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={() => setActiveSkillId(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative z-10 w-full max-w-xl max-h-[85vh] overflow-y-auto liquid-glass rounded-2xl p-5 sm:p-6 border border-[var(--accent)]/30"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setActiveSkillId(null)}
+              className="absolute top-4 right-4 text-[var(--black-6)] hover:text-white"
+              aria-label="关闭技能详情"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: activeSkill.branchColor }}>
+                <Star size={20} className="text-white fill-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">{activeSkill.name}</h3>
+                <div className="text-xs text-[var(--black-6)]">{activeSkill.branch}</div>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="text-xs text-[var(--black-6)] mb-1">等级</div>
+              <div className="font-mono-data text-2xl text-white">
+                Lv.{activeSkill.level}<span className="text-[var(--black-6)]">/{activeSkill.maxLevel}</span>
+              </div>
+            </div>
+
+            <p className="text-sm text-[var(--black-5)] mb-4">{activeSkill.description}</p>
+
+            <div className="mb-4 p-3 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)]">
+              <div className="text-xs text-[var(--black-6)] mb-1">绑定游戏</div>
+              <div className="text-sm text-white leading-relaxed">
+                {activeSkill.gameIds.length > 0
+                  ? activeSkill.gameIds.map(gameId => gameNameMap.get(gameId) ?? gameId).join('、')
+                  : '未绑定'}
+              </div>
+            </div>
+
+            {(() => {
+              const nextRequirement = getNextRequirement(activeSkill, gameProgress as ProgressLookup);
+              if (!nextRequirement) {
+                return (
+                  <div className="w-full px-4 py-3 bg-[var(--gold)]/20 border border-[var(--gold)] rounded-lg text-[var(--gold)] font-medium text-center">
+                    已满级
+                  </div>
+                );
+              }
+
+              const parentRequirementMet = activeSkill.unlockable;
+              const gameRequirementMet = nextRequirement.highestCompletedLevel >= nextRequirement.requiredGameLevel;
+              const pointRequirementMet = totalSkillPointsEarned >= nextRequirement.requiredSkillPoints;
+
+              return (
+                <div className="p-3 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)]">
+                  <div className="text-xs text-[var(--black-6)] mb-1">
+                    下一等级目标: Lv.{nextRequirement.nextLevel}
+                  </div>
+                  <div className={`text-sm ${parentRequirementMet ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                    {parentRequirementMet ? '✓' : '✗'} 前置技能已满足
+                  </div>
+                  <div className={`text-sm ${gameRequirementMet ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                    {gameRequirementMet ? '✓' : '✗'} 绑定游戏关卡: {nextRequirement.highestCompletedLevel}/{nextRequirement.requiredGameLevel}
+                  </div>
+                  <div className={`text-sm ${pointRequirementMet ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                    {pointRequirementMet ? '✓' : '✗'} 累计技能点: {totalSkillPointsEarned}/{nextRequirement.requiredSkillPoints}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

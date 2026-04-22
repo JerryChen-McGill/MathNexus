@@ -2,14 +2,13 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Home from '@/pages/Home';
 import GameHub from '@/pages/GameHub';
 import GameArena from '@/pages/GameArena';
-import SkillTreePage from '@/pages/SkillTreePage';
 import Profile from '@/pages/Profile';
 import Navbar from '@/components/Navbar';
 import { useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
 
 export default function App() {
-  const { playerName } = useGameStore();
+  const { playerName, settings } = useGameStore();
 
   useEffect(() => {
     if (!playerName) {
@@ -17,14 +16,18 @@ export default function App() {
     }
   }, [playerName]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', settings.theme);
+  }, [settings.theme]);
+
   return (
-    <div className="min-h-screen bg-[var(--black-1)] text-white">
+    <div className="min-h-screen bg-[var(--black-1)] text-[var(--white)]">
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/games" element={<GameHub />} />
         <Route path="/game/:gameId" element={<GameArena />} />
-        <Route path="/skilltree" element={<SkillTreePage />} />
+        <Route path="/skilltree" element={<Navigate to="/profile" replace />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

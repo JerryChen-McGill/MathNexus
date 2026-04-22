@@ -29,6 +29,7 @@ interface GameSettings {
   soundEnabled: boolean;
   musicEnabled: boolean;
   difficulty: 'easy' | 'normal' | 'hard';
+  theme: 'dark' | 'light';
 }
 
 interface GameState {
@@ -165,6 +166,7 @@ const defaultSettings: GameSettings = {
   soundEnabled: true,
   musicEnabled: true,
   difficulty: 'normal',
+  theme: 'dark',
 };
 
 export const useGameStore = create<GameState>()(
@@ -332,7 +334,7 @@ export const useGameStore = create<GameState>()(
     }),
     {
       name: 'mathnexus-save',
-      version: 2,
+      version: 3,
       migrate: (persistedState) => {
         const savedState = persistedState as Partial<GameState> | undefined;
         if (!savedState) return persistedState;
@@ -353,6 +355,11 @@ export const useGameStore = create<GameState>()(
           totalSkillPointsEarned,
           gameProgress: savedProgress,
           skillNodes: syncedSkillNodes,
+          settings: {
+            ...defaultSettings,
+            ...(savedState.settings ?? {}),
+            theme: (savedState.settings as Partial<GameSettings> | undefined)?.theme ?? 'dark',
+          },
         };
       },
     }

@@ -1,19 +1,23 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Gamepad2, GitBranch, Trophy, Settings } from 'lucide-react';
+import { Home, Gamepad2, Trophy, Settings, Sun, Moon } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { useState } from 'react';
 
 export default function Navbar() {
   const location = useLocation();
-  const { totalScore } = useGameStore();
+  const { totalScore, settings, updateSettings } = useGameStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navItems = [
     { path: '/', label: '首页', icon: Home },
     { path: '/games', label: '游戏大厅', icon: Gamepad2 },
-    { path: '/skilltree', label: '技能树', icon: GitBranch },
     { path: '/profile', label: '成就', icon: Trophy },
   ];
+
+  const isLightTheme = settings.theme === 'light';
+  const handleToggleTheme = () => {
+    updateSettings({ theme: isLightTheme ? 'dark' : 'light' });
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 liquid-glass">
@@ -52,6 +56,15 @@ export default function Navbar() {
 
           {/* Score + Settings */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleToggleTheme}
+              className="p-2 rounded-lg text-[var(--black-6)] hover:text-white hover:bg-white/5 transition-all duration-200"
+              aria-label={isLightTheme ? '切换深色主题' : '切换浅色主题'}
+              title={isLightTheme ? '切换深色主题' : '切换浅色主题'}
+            >
+              {isLightTheme ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)]">
               <Trophy size={14} className="text-[var(--gold)]" />
               <span className="font-mono-data text-sm text-[var(--gold)]">
