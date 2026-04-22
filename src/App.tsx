@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import Home from '@/pages/Home';
 import GameHub from '@/pages/GameHub';
 import GameArena from '@/pages/GameArena';
@@ -26,6 +26,7 @@ export default function App() {
         <Route path="/game/:gameId" element={<GameArena />} />
         <Route path="/skilltree" element={<SkillTreePage />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Calculator, Shapes, Brain, Swords, Scroll, ChevronDown, Star, Gamepad2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { games, skillNodes } from '@/data/games';
+import { assetPath, games, skillNodes } from '@/data/games';
 import { useGameStore } from '@/store/gameStore';
 
 const mathTerms = [
@@ -412,7 +412,7 @@ export default function Home() {
 
             <div className="flex justify-center">
               <img
-                src="images/skilltree.jpg"
+                src={assetPath('images/skilltree.jpg')}
                 alt="Skill Tree"
                 className="w-full max-w-md rounded-2xl border border-[var(--black-3)] opacity-80 hover:opacity-100 transition-opacity duration-500"
               />
