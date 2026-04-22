@@ -113,12 +113,6 @@ export default function Profile() {
     }));
   };
 
-  const getNodeStatus = (node: SkillNode) => {
-    if (node.unlocked) return 'unlocked';
-    if (node.unlockable) return 'unlockable';
-    return 'locked';
-  };
-
   useEffect(() => {
     if (!activeSkillId) return;
 
@@ -387,23 +381,21 @@ export default function Profile() {
                         <div className="px-4 pb-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {branchNodes.map(node => {
-                              const status = getNodeStatus(node);
                               const nextRequirement = getNextRequirement(node, gameProgress as ProgressLookup);
+                              const hasAnyLevel = node.level > 0;
 
                               return (
                                 <button
                                   key={node.id}
                                   onClick={() => setActiveSkillId(node.id)}
                                   className={`p-3 rounded-lg border text-left transition-all hover:scale-[1.01] ${
-                                    status === 'unlocked'
+                                    hasAnyLevel
                                       ? 'border-[var(--success)]/40 bg-[var(--success)]/8'
-                                      : status === 'unlockable'
-                                        ? 'border-[var(--accent)]/50 bg-[var(--accent)]/8'
-                                        : 'border-[var(--black-3)] bg-[var(--black-1)]'
+                                      : 'border-[var(--black-3)] bg-[var(--black-1)]'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2 mb-1">
-                                    {status === 'unlocked' ? (
+                                    {hasAnyLevel ? (
                                       <Star size={14} className="text-[var(--gold)] fill-[var(--gold)]" />
                                     ) : (
                                       <Lock size={14} className="text-[var(--black-6)]" />
