@@ -58,7 +58,7 @@ const renderLevelCells = (level: number, maxLevel: number) => (
           key={index}
           className={`w-2.5 h-2.5 rounded-[3px] border ${
             active
-              ? 'bg-[var(--accent)] border-[var(--accent)]'
+              ? 'bg-[#FFD60A] border-[#FFD60A] shadow-[0_0_6px_rgba(255,214,10,0.8)]'
               : 'bg-transparent border-[var(--black-4)]'
           }`}
         />
