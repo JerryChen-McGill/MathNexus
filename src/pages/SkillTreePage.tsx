@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type MouseEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useGameStore } from '@/store/gameStore';
 import { games, skillBranches } from '@/data/games';
 import type { SkillNode } from '@/data/games';
@@ -58,11 +59,13 @@ function SkillDetailContent({
   gameProgress,
   totalSkillPointsEarned,
   compact = false,
+  onGameTagClick,
 }: {
   node: SkillNode;
   gameProgress: ProgressLookup;
   totalSkillPointsEarned: number;
   compact?: boolean;
+  onGameTagClick?: () => void;
 }) {
   const nextRequirement = getNextRequirement(node, gameProgress);
   const parentRequirementMet = node.unlockable;
@@ -100,11 +103,36 @@ function SkillDetailContent({
       </p>
 
       <div className="mb-4 p-3 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)]">
-        <div className="text-xs text-[var(--black-6)] mb-1">绑定游戏</div>
-        <div className={`text-sm text-white leading-relaxed ${compact ? 'line-clamp-2' : ''}`}>
-          {node.gameIds.length > 0
-            ? node.gameIds.map(gameId => gameNameMap.get(gameId) ?? gameId).join('、')
-            : '未绑定'}
+        <div className="text-xs text-[var(--black-6)] mb-2">绑定游戏</div>
+        <div className="flex flex-wrap gap-2">
+          {node.gameIds.length > 0 ? (
+            node.gameIds.map(gameId => {
+              const gameName = gameNameMap.get(gameId) ?? gameId;
+              if (compact) {
+                return (
+                  <span
+                    key={gameId}
+                    className="px-2 py-0.5 rounded text-[10px] border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)]"
+                  >
+                    {gameName}
+                  </span>
+                );
+              }
+
+              return (
+                <Link
+                  key={gameId}
+                  to={`/game/${gameId}`}
+                  onClick={onGameTagClick}
+                  className="px-2.5 py-1 rounded-md text-xs border border-[var(--accent)]/40 bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 transition-all"
+                >
+                  {gameName}
+                </Link>
+              );
+            })
+          ) : (
+            <span className="text-sm text-[var(--black-6)]">未绑定</span>
+          )}
         </div>
       </div>
 
@@ -414,6 +442,7 @@ export default function SkillTreePage() {
               node={activeNode}
               gameProgress={gameProgress as ProgressLookup}
               totalSkillPointsEarned={totalSkillPointsEarned}
+              onGameTagClick={() => setActiveNodeId(null)}
             />
           </div>
         </div>

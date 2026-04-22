@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { games, levelConfigs } from '@/data/games';
 import { useGameStore } from '@/store/gameStore';
 import { ArrowLeft, Pause, RotateCcw, Home, Star, Play, ChevronRight } from 'lucide-react';
@@ -54,10 +54,14 @@ const gameComponents: Record<string, React.FC<any>> = {
 export default function GameArena() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
-  const { completeLevel, failLevel, getGameProgress } = useGameStore();
+  const { completeLevel, failLevel, getGameProgress, skillNodes } = useGameStore();
 
   const game = games.find(g => g.id === gameId);
   const savedProgress = gameId ? getGameProgress(gameId) : undefined;
+  const skillMetaMap = useMemo(
+    () => new Map(skillNodes.map(node => [node.id, { name: node.name, color: node.branchColor }])),
+    [skillNodes]
+  );
 
   const [currentLevel, setCurrentLevel] = useState(1);
   const [gameState, setGameState] = useState<GameState>('ready');
@@ -173,6 +177,15 @@ export default function GameArena() {
       </div>
     );
   }
+
+  const relatedSkills = game.skills.map(skillId => {
+    const meta = skillMetaMap.get(skillId);
+    return {
+      id: skillId,
+      name: meta?.name ?? skillId,
+      color: meta?.color ?? '#3B82F6',
+    };
+  });
 
   const GameComponent = gameComponents[gameId];
   const levelProgress = gameId ? getGameProgress(gameId)?.levels[`level-${currentLevel}`] : undefined;
@@ -319,6 +332,25 @@ export default function GameArena() {
                 <p className="text-sm text-[var(--black-6)] mb-6">
                   {game.description}
                 </p>
+
+                <div className="mb-6 p-3 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)] text-left">
+                  <div className="text-xs text-[var(--black-6)] mb-2">关联数学技能</div>
+                  <div className="flex flex-wrap gap-2">
+                    {relatedSkills.map(skill => (
+                      <span
+                        key={skill.id}
+                        className="px-2.5 py-1 rounded-md text-xs font-medium border"
+                        style={{
+                          color: skill.color,
+                          borderColor: `${skill.color}66`,
+                          backgroundColor: `${skill.color}20`,
+                        }}
+                      >
+                        {skill.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Level params */}
                 <div className="grid grid-cols-2 gap-3 mb-8">
