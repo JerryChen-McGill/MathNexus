@@ -73,8 +73,10 @@ export default function Navbar() {
             </div>
 
             <Link
-              to="/profile"
+              to="/profile#settings"
               className="p-2 rounded-lg text-[var(--black-6)] hover:text-white hover:bg-white/5 transition-all duration-200"
+              aria-label="打开设置"
+              title="设置"
             >
               <Settings size={18} />
             </Link>

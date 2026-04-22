@@ -5,15 +5,6 @@ import gsap from 'gsap';
 import { assetPath } from '@/data/games';
 import { useGameStore } from '@/store/gameStore';
 
-const mathTerms = [
-  'SUDOKU', 'PRIME', 'LOGIC', 'GRAPH', 'ALGEBRA',
-  'TOPOLOGY', 'FIBONACCI', 'GEOMETRY', 'NIM', 'COMBINATORICS',
-  'PROBABILITY', 'ALGORITHM', 'SET', 'GROUP', 'MATRIX',
-  'EQUATION', 'PROOF', 'NUMBER', 'SPACE', 'GAME',
-  'THEORY', 'EUCLID', 'PASCAL', 'GAUSS', 'EULER',
-  'KONIGSBERG', 'TANGRAM', 'MAGIC', 'SQUARE', 'PENTOMINO',
-];
-
 const features = [
   { icon: Calculator, title: '数字运算', desc: '数独、24点、幻方等，训练你的数感与运算能力', color: '#3B82F6' },
   { icon: Shapes, title: '几何拼图', desc: '七巧板、河内塔等，培养空间想象力', color: '#10B981' },
@@ -27,7 +18,6 @@ export default function Home() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const orbRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
   const { skillPoints, totalScore, games, skillNodes } = useGameStore();
@@ -62,25 +52,6 @@ export default function Home() {
         duration: 0.8,
         ease: 'power3.out',
       }, '-=0.4');
-    }
-
-    if (orbRef.current) {
-      tl.from(orbRef.current, {
-        opacity: 0,
-        scale: 0.8,
-        duration: 1.5,
-        ease: 'power2.out',
-      }, '-=1');
-    }
-
-    // 3D orb rotation
-    if (orbRef.current) {
-      gsap.to(orbRef.current, {
-        rotationY: 360,
-        duration: 60,
-        repeat: -1,
-        ease: 'none',
-      });
     }
 
     return () => {
@@ -168,31 +139,6 @@ export default function Home() {
           }}
         />
 
-        {/* 3D Cylinder Orb */}
-        <div
-          ref={orbRef}
-          className="absolute w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] lg:w-[600px] lg:h-[600px]"
-          style={{
-            transformStyle: 'preserve-3d',
-            perspective: '1200px',
-          }}
-        >
-          {mathTerms.map((term, i) => (
-            <span
-              key={i}
-              className="absolute left-1/2 top-1/2 text-[10px] sm:text-xs font-mono-data tracking-widest"
-              style={{
-                color: 'var(--black-5)',
-                opacity: 0.6,
-                transform: `translate(-50%, -50%) rotateY(${i * 12}deg) translateZ(200px)`,
-                transformStyle: 'preserve-3d',
-              }}
-            >
-              {term}
-            </span>
-          ))}
-        </div>
-
         {/* Hero Content */}
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <h1
@@ -208,7 +154,7 @@ export default function Home() {
             ref={subtitleRef}
             className="text-[var(--black-6)] text-lg sm:text-xl mb-10 max-w-2xl mx-auto"
           >
-            30+ 经典数学游戏 | 8大技能分支 | 从入门到大师
+            20+ 经典数学游戏 | 8大技能分支 | 从入门到大师
           </p>
 
           <div ref={ctaRef} className="flex flex-col sm:flex-row items-center justify-center gap-4">

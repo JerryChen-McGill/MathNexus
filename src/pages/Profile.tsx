@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/store/gameStore';
 import { skillBranches } from '@/data/games';
 import type { SkillNode } from '@/data/games';
@@ -116,6 +116,8 @@ export default function Profile() {
   const [activeSkillId, setActiveSkillId] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [skillPanelView, setSkillPanelView] = useState<SkillPanelView>('list');
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const activeSkill = nodes.find(node => node.id === activeSkillId);
   const gameNameMap = useMemo(() => new Map(games.map(game => [game.id, game.name])), [games]);
@@ -169,6 +171,17 @@ export default function Profile() {
   const closeSettingsModal = () => {
     setShowSettingsModal(false);
     setShowResetConfirm(false);
+
+    if (location.hash === '#settings') {
+      navigate(
+        {
+          pathname: location.pathname,
+          search: location.search,
+          hash: '',
+        },
+        { replace: true }
+      );
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -203,6 +216,13 @@ export default function Profile() {
   }, [activeSkillId, showSettingsModal]);
 
   useEffect(() => {
+    if (location.hash === '#settings') {
+      setShowSettingsModal(true);
+      setShowResetConfirm(false);
+    }
+  }, [location.hash]);
+
+  useEffect(() => {
     if (!activeSkillId && !showSettingsModal) return;
 
     const originalOverflow = document.body.style.overflow;
@@ -217,21 +237,11 @@ export default function Profile() {
     <div className="pt-14 min-h-screen">
       {/* Header */}
       <section className="pt-8 pb-6 px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="max-w-[1440px] mx-auto flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-display text-[clamp(2rem,5vw,3rem)] text-white mb-2">
-              我的数学之旅
-            </h1>
-            <p className="text-[var(--black-6)]">追踪你的数学冒险进度</p>
-          </div>
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="liquid-glass h-11 w-11 rounded-xl flex items-center justify-center text-[var(--black-6)] hover:text-white transition-all"
-            aria-label="打开设置"
-            title="设置"
-          >
-            <Settings size={18} />
-          </button>
+        <div className="max-w-[1440px] mx-auto">
+          <h1 className="font-display text-[clamp(2rem,5vw,3rem)] text-white mb-2">
+            我的数学之旅
+          </h1>
+          <p className="text-[var(--black-6)]">追踪你的数学冒险进度</p>
         </div>
       </section>
 
@@ -466,36 +476,54 @@ export default function Profile() {
               ) : (
                 <div className="space-y-4">
                   <div className="rounded-xl border border-[var(--black-3)] bg-[var(--black-2)] p-4 sm:p-6">
-                    <div className="h-[320px] sm:h-[380px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart data={radarData} outerRadius="72%">
-                          <PolarGrid stroke="var(--black-4)" />
-                          <PolarAngleAxis
-                            dataKey="name"
-                            tick={{ fill: 'var(--black-6)', fontSize: 12 }}
-                          />
-                          <PolarRadiusAxis
-                            angle={90}
-                            domain={[0, radarMax]}
-                            tickCount={5}
-                            tick={{ fill: 'var(--black-6)', fontSize: 10 }}
-                          />
-                          <Radar
-                            name="分支总值"
-                            dataKey="total"
-                            stroke="var(--black-5)"
-                            fill="transparent"
-                            strokeDasharray="6 4"
-                          />
-                          <Radar
-                            name="当前值"
-                            dataKey="current"
-                            stroke="var(--accent)"
-                            fill="var(--accent)"
-                            fillOpacity={0.3}
-                          />
-                        </RadarChart>
-                      </ResponsiveContainer>
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                      <div className="h-[320px] sm:h-[380px] w-full flex-1 min-w-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={radarData} outerRadius="72%">
+                            <PolarGrid stroke="#4B5563" />
+                            <PolarAngleAxis
+                              dataKey="name"
+                              tick={{ fill: 'var(--black-5)', fontSize: 12 }}
+                            />
+                            <PolarRadiusAxis
+                              angle={90}
+                              domain={[0, radarMax]}
+                              tickCount={5}
+                              tick={{ fill: 'var(--black-6)', fontSize: 10 }}
+                            />
+                            <Radar
+                              name="系统技能上限"
+                              dataKey="total"
+                              stroke="#94A3B8"
+                              strokeWidth={2}
+                              fill="transparent"
+                              strokeDasharray="6 4"
+                            />
+                            <Radar
+                              name="当前技能情况"
+                              dataKey="current"
+                              stroke="#FFD60A"
+                              strokeWidth={2}
+                              fill="#FFD60A"
+                              fillOpacity={0.58}
+                            />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="lg:w-60 rounded-lg border border-[var(--black-3)] bg-[var(--black-1)] p-4 space-y-3">
+                        <div className="text-xs text-[var(--black-6)] tracking-[0.08em] uppercase">图例</div>
+                        <div className="flex items-center gap-2 text-xs text-[var(--black-5)]">
+                          <span className="w-6 border-t-2 border-dashed border-[#94A3B8]" />
+                          <span>系统技能上限（虚线）</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-[#FFD60A]">
+                          <span className="w-6 h-2 rounded-sm bg-[#FFD60A]/70 border border-[#FFD60A]" />
+                          <span>当前技能情况（填充）</span>
+                        </div>
+                        <p className="text-[11px] text-[var(--black-6)] leading-relaxed">
+                          外圈虚线表示目前系统提供的技能上限，内部亮黄色区域表示你当前已达成的技能水平。
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -648,18 +676,26 @@ export default function Profile() {
                 <span className="text-sm text-[var(--black-5)]">音效</span>
                 <button
                   onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
-                  className={`w-12 h-6 rounded-full transition-all ${settings.soundEnabled ? 'bg-[var(--accent)]' : 'bg-[var(--black-3)]'}`}
+                  className={`relative w-12 h-6 rounded-full border transition-all duration-200 ${
+                    settings.soundEnabled
+                      ? 'bg-[var(--accent)] border-[var(--accent-glow)] shadow-[0_0_0_2px_rgba(59,130,246,0.2)]'
+                      : 'bg-[var(--black-4)] border-[var(--black-5)]'
+                  }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.soundEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                  <span className={`block w-5 h-5 rounded-full bg-white border border-black/15 shadow transition-transform duration-200 ${settings.soundEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
                 </button>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-[var(--black-5)]">音乐</span>
                 <button
                   onClick={() => updateSettings({ musicEnabled: !settings.musicEnabled })}
-                  className={`w-12 h-6 rounded-full transition-all ${settings.musicEnabled ? 'bg-[var(--accent)]' : 'bg-[var(--black-3)]'}`}
+                  className={`relative w-12 h-6 rounded-full border transition-all duration-200 ${
+                    settings.musicEnabled
+                      ? 'bg-[var(--accent)] border-[var(--accent-glow)] shadow-[0_0_0_2px_rgba(59,130,246,0.2)]'
+                      : 'bg-[var(--black-4)] border-[var(--black-5)]'
+                  }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.musicEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                  <span className={`block w-5 h-5 rounded-full bg-white border border-black/15 shadow transition-transform duration-200 ${settings.musicEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
                 </button>
               </div>
               <div className="flex items-center justify-between">
