@@ -1,5 +1,5 @@
 import { useGameStore } from '@/store/gameStore';
-import { games, skillBranches } from '@/data/games';
+import { skillBranches } from '@/data/games';
 import { Star, Trophy, Clock, Gamepad2, TrendingUp, Settings, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
@@ -7,7 +7,7 @@ export default function Profile() {
   const {
     playerName, totalScore, skillPoints, totalSkillPointsEarned,
     gameProgress, stats, settings, updateSettings, resetProgress,
-    skillNodes: nodes,
+    skillNodes: nodes, games,
   } = useGameStore();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 

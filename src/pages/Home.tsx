@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Calculator, Shapes, Brain, Swords, Scroll, ChevronDown, Star, Gamepad2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { assetPath, games, skillNodes } from '@/data/games';
+import { assetPath } from '@/data/games';
 import { useGameStore } from '@/store/gameStore';
 
 const mathTerms = [
@@ -30,7 +30,7 @@ export default function Home() {
   const orbRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
-  const { skillPoints, totalScore } = useGameStore();
+  const { skillPoints, totalScore, games, skillNodes } = useGameStore();
   const unlockedSkills = skillNodes.filter(s => s.unlocked).length;
 
   useEffect(() => {

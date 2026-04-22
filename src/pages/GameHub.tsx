@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { games, categoryColors } from '@/data/games';
+import { categoryColors } from '@/data/games';
 import type { GameCategory } from '@/data/games';
+import { useGameStore } from '@/store/gameStore';
 import { Star, ChevronRight } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -16,6 +17,7 @@ const categories: Array<{ id: GameCategory | 'all'; label: string }> = [
 
 export default function GameHub() {
   const [activeCategory, setActiveCategory] = useState<GameCategory | 'all'>('all');
+  const games = useGameStore(state => state.games);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const filteredGames = activeCategory === 'all'

@@ -58,13 +58,99 @@ interface GameState {
   calculateScore: (baseScore: number, timeLeft: number, stars: number, difficulty: string) => number;
 }
 
-const defaultProgress: Record<string, GameProgress> = {};
-defaultGames.forEach(g => {
-  defaultProgress[g.id] = {
-    highestLevel: 1,
-    levels: {},
-  };
-});
+const SKILL_LEVEL_GAME_REQUIREMENTS = [1, 3, 5, 7, 10] as const;
+const SKILL_LEVEL_POINT_FACTORS = [1, 3, 6, 10, 15] as const;
+const SKILL_POINT_REQUIREMENT_BASE = 20;
+
+const createDefaultProgress = (): Record<string, GameProgress> => {
+  const progress: Record<string, GameProgress> = {};
+  defaultGames.forEach(g => {
+    progress[g.id] = {
+      highestLevel: 1,
+      levels: {},
+    };
+  });
+  return progress;
+};
+
+const getRequiredGameLevel = (skillLevel: number): number => (
+  SKILL_LEVEL_GAME_REQUIREMENTS[
+    Math.min(skillLevel - 1, SKILL_LEVEL_GAME_REQUIREMENTS.length - 1)
+  ]
+);
+
+const getRequiredSkillPoints = (node: SkillNode, skillLevel: number): number => (
+  node.cost
+  * SKILL_POINT_REQUIREMENT_BASE
+  * SKILL_LEVEL_POINT_FACTORS[
+    Math.min(skillLevel - 1, SKILL_LEVEL_POINT_FACTORS.length - 1)
+  ]
+);
+
+const getHighestCompletedLevelForNode = (
+  node: SkillNode,
+  gameProgress: Record<string, GameProgress>
+): number => {
+  if (node.gameIds.length === 0) return 0;
+
+  return node.gameIds.reduce((highest, gameId) => {
+    const unlockedLevel = gameProgress[gameId]?.highestLevel ?? 1;
+    return Math.max(highest, Math.max(0, unlockedLevel - 1));
+  }, 0);
+};
+
+const calculateAutoSkillNodes = (
+  skillNodes: SkillNode[],
+  gameProgress: Record<string, GameProgress>,
+  totalSkillPointsEarned: number
+): SkillNode[] => {
+  const nextNodes = skillNodes.map(node => ({ ...node }));
+  let hasChanges = true;
+
+  while (hasChanges) {
+    hasChanges = false;
+    const nodeMap = new Map(nextNodes.map(node => [node.id, node]));
+
+    for (let i = 0; i < nextNodes.length; i += 1) {
+      const node = nextNodes[i];
+      const parentsUnlocked = node.parentIds.every(
+        parentId => (nodeMap.get(parentId)?.level ?? 0) > 0
+      );
+      const highestCompletedLevel = getHighestCompletedLevelForNode(node, gameProgress);
+
+      let targetLevel = node.level;
+      if (parentsUnlocked) {
+        for (let nextLevel = node.level + 1; nextLevel <= node.maxLevel; nextLevel += 1) {
+          const requiredGameLevel = getRequiredGameLevel(nextLevel);
+          const requiredSkillPoints = getRequiredSkillPoints(node, nextLevel);
+
+          if (
+            highestCompletedLevel >= requiredGameLevel
+            && totalSkillPointsEarned >= requiredSkillPoints
+          ) {
+            targetLevel = nextLevel;
+          } else {
+            break;
+          }
+        }
+      }
+
+      const unlocked = targetLevel > 0;
+      const unlockable = parentsUnlocked;
+
+      if (
+        targetLevel !== node.level
+        || unlocked !== node.unlocked
+        || unlockable !== node.unlockable
+      ) {
+        nextNodes[i] = { ...node, level: targetLevel, unlocked, unlockable };
+        hasChanges = true;
+      }
+    }
+  }
+
+  return nextNodes;
+};
 
 const defaultStats: PlayerStats = {
   totalGamesPlayed: 0,
@@ -88,9 +174,9 @@ export const useGameStore = create<GameState>()(
       totalScore: 0,
       skillPoints: 0,
       totalSkillPointsEarned: 0,
-      games: defaultGames,
-      skillNodes: defaultSkillNodes,
-      gameProgress: defaultProgress,
+      games: defaultGames.map(game => ({ ...game })),
+      skillNodes: defaultSkillNodes.map(node => ({ ...node })),
+      gameProgress: createDefaultProgress(),
       stats: defaultStats,
       settings: defaultSettings,
       currentGame: null,
@@ -128,15 +214,12 @@ export const useGameStore = create<GameState>()(
 
         // Calculate skill points earned
         const skillPointsEarned = stars * 10 + Math.floor(score / 100);
-
-        // Unlock related skills
-        const game = state.games.find(g => g.id === gameId);
-        const newSkillNodes = state.skillNodes.map(node => {
-          if (game?.skills.includes(node.id) && !node.unlocked) {
-            return { ...node, unlockable: true };
-          }
-          return node;
-        });
+        const newTotalSkillPointsEarned = state.totalSkillPointsEarned + skillPointsEarned;
+        const newSkillNodes = calculateAutoSkillNodes(
+          state.skillNodes,
+          progress,
+          newTotalSkillPointsEarned
+        );
 
         // Update game stats
         const newGames = state.games.map(g => {
@@ -157,7 +240,7 @@ export const useGameStore = create<GameState>()(
           gameProgress: progress,
           totalScore: state.totalScore + score,
           skillPoints: state.skillPoints + skillPointsEarned,
-          totalSkillPointsEarned: state.totalSkillPointsEarned + skillPointsEarned,
+          totalSkillPointsEarned: newTotalSkillPointsEarned,
           skillNodes: newSkillNodes,
           games: newGames,
           stats: {
@@ -196,47 +279,27 @@ export const useGameStore = create<GameState>()(
       },
 
       unlockSkill: (skillId) => {
+        void skillId;
         const state = get();
-        const node = state.skillNodes.find(n => n.id === skillId);
-        if (!node || node.unlocked || !node.unlockable || state.skillPoints < node.cost) return;
-
-        const newSkillNodes = state.skillNodes.map(n => {
-          if (n.id === skillId) {
-            return { ...n, unlocked: true, level: 1 };
-          }
-          // Check if children should become unlockable
-          if (n.parentIds.includes(skillId)) {
-            const allParentsUnlocked = n.parentIds.every(pid =>
-              state.skillNodes.find(sn => sn.id === pid)?.unlocked
-            );
-            if (allParentsUnlocked) {
-              return { ...n, unlockable: true };
-            }
-          }
-          return n;
-        });
-
         set({
-          skillNodes: newSkillNodes,
-          skillPoints: state.skillPoints - node.cost,
+          skillNodes: calculateAutoSkillNodes(
+            state.skillNodes,
+            state.gameProgress,
+            state.totalSkillPointsEarned
+          ),
         });
       },
 
       upgradeSkill: (skillId) => {
+        void skillId;
         const state = get();
-        const node = state.skillNodes.find(n => n.id === skillId);
-        if (!node || !node.unlocked || node.level >= node.maxLevel) return;
-
-        const cost = node.cost + node.level;
-        if (state.skillPoints < cost) return;
-
-        const newSkillNodes = state.skillNodes.map(n =>
-          n.id === skillId ? { ...n, level: n.level + 1 } : n
-        );
 
         set({
-          skillNodes: newSkillNodes,
-          skillPoints: state.skillPoints - cost,
+          skillNodes: calculateAutoSkillNodes(
+            state.skillNodes,
+            state.gameProgress,
+            state.totalSkillPointsEarned
+          ),
         });
       },
 
@@ -248,10 +311,10 @@ export const useGameStore = create<GameState>()(
         totalScore: 0,
         skillPoints: 0,
         totalSkillPointsEarned: 0,
-        gameProgress: defaultProgress,
+        gameProgress: createDefaultProgress(),
         stats: defaultStats,
-        skillNodes: defaultSkillNodes,
-        games: defaultGames,
+        skillNodes: defaultSkillNodes.map(node => ({ ...node })),
+        games: defaultGames.map(game => ({ ...game })),
       }),
 
       getGameProgress: (gameId) => get().gameProgress[gameId],
@@ -269,7 +332,29 @@ export const useGameStore = create<GameState>()(
     }),
     {
       name: 'mathnexus-save',
-      version: 1,
+      version: 2,
+      migrate: (persistedState) => {
+        const savedState = persistedState as Partial<GameState> | undefined;
+        if (!savedState) return persistedState;
+
+        const savedProgress = savedState.gameProgress ?? createDefaultProgress();
+        const totalSkillPointsEarned = savedState.totalSkillPointsEarned ?? savedState.skillPoints ?? 0;
+        const normalizedSkillPoints = Math.max(savedState.skillPoints ?? 0, totalSkillPointsEarned);
+        const baseSkillNodes = savedState.skillNodes ?? defaultSkillNodes.map(node => ({ ...node }));
+        const syncedSkillNodes = calculateAutoSkillNodes(
+          baseSkillNodes,
+          savedProgress,
+          totalSkillPointsEarned
+        );
+
+        return {
+          ...savedState,
+          skillPoints: normalizedSkillPoints,
+          totalSkillPointsEarned,
+          gameProgress: savedProgress,
+          skillNodes: syncedSkillNodes,
+        };
+      },
     }
   )
 );

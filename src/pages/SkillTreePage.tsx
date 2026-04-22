@@ -1,11 +1,64 @@
 import { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '@/store/gameStore';
-import { skillBranches } from '@/data/games';
+import { games, skillBranches } from '@/data/games';
+import type { SkillNode } from '@/data/games';
 import { Star, Lock, X } from 'lucide-react';
 import gsap from 'gsap';
 
+const SKILL_LEVEL_GAME_REQUIREMENTS = [1, 3, 5, 7, 10] as const;
+const SKILL_LEVEL_POINT_FACTORS = [1, 3, 6, 10, 15] as const;
+const SKILL_POINT_REQUIREMENT_BASE = 20;
+
+const gameNameMap = new Map(games.map(game => [game.id, game.name]));
+
+type ProgressLookup = Record<string, { highestLevel: number }>;
+
+const getRequiredGameLevel = (skillLevel: number): number => (
+  SKILL_LEVEL_GAME_REQUIREMENTS[
+    Math.min(skillLevel - 1, SKILL_LEVEL_GAME_REQUIREMENTS.length - 1)
+  ]
+);
+
+const getRequiredSkillPoints = (node: SkillNode, skillLevel: number): number => (
+  node.cost
+  * SKILL_POINT_REQUIREMENT_BASE
+  * SKILL_LEVEL_POINT_FACTORS[
+    Math.min(skillLevel - 1, SKILL_LEVEL_POINT_FACTORS.length - 1)
+  ]
+);
+
+const getHighestCompletedLevel = (node: SkillNode, gameProgress: ProgressLookup): number => {
+  if (node.gameIds.length === 0) return 0;
+
+  return node.gameIds.reduce((highest, gameId) => {
+    const unlockedLevel = gameProgress[gameId]?.highestLevel ?? 1;
+    return Math.max(highest, Math.max(0, unlockedLevel - 1));
+  }, 0);
+};
+
+const getNextRequirement = (node: SkillNode, gameProgress: ProgressLookup) => {
+  if (node.level >= node.maxLevel) return null;
+
+  const nextLevel = node.level + 1;
+  const requiredGameLevel = getRequiredGameLevel(nextLevel);
+  const requiredSkillPoints = getRequiredSkillPoints(node, nextLevel);
+  const highestCompletedLevel = getHighestCompletedLevel(node, gameProgress);
+
+  return {
+    nextLevel,
+    requiredGameLevel,
+    requiredSkillPoints,
+    highestCompletedLevel,
+  };
+};
+
 export default function SkillTreePage() {
-  const { skillNodes: nodes, skillPoints, unlockSkill } = useGameStore();
+  const {
+    skillNodes: nodes,
+    skillPoints,
+    totalSkillPointsEarned,
+    gameProgress,
+  } = useGameStore();
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
   const treeRef = useRef<HTMLDivElement>(null);
@@ -21,25 +74,27 @@ export default function SkillTreePage() {
     );
   }, [filter]);
 
-  const filteredNodes = filter === 'all' ? nodes : nodes.filter(n => n.branch === skillBranches.find(b => b.id === filter)?.name);
+  const filteredNodes = filter === 'all'
+    ? nodes
+    : nodes.filter(n => n.branch === skillBranches.find(b => b.id === filter)?.name);
 
-  const getNodeStatus = (node: typeof nodes[0]) => {
+  const getNodeStatus = (node: SkillNode) => {
     if (node.unlocked) return 'unlocked';
     if (node.unlockable) return 'unlockable';
     return 'locked';
   };
 
-  const handleUnlock = (nodeId: string) => {
-    unlockSkill(nodeId);
-    // Animate
-    const el = document.querySelector(`[data-node="${nodeId}"]`);
-    if (el) {
-      gsap.fromTo(el,
-        { scale: 0 },
-        { scale: 1, duration: 0.5, ease: 'back.out(1.7)' }
-      );
-    }
-  };
+  const selectedRequirement = selected
+    ? getNextRequirement(selected, gameProgress as ProgressLookup)
+    : null;
+
+  const selectedParentRequirementMet = selected ? selected.unlockable : false;
+  const selectedGameRequirementMet = selectedRequirement
+    ? selectedRequirement.highestCompletedLevel >= selectedRequirement.requiredGameLevel
+    : false;
+  const selectedPointRequirementMet = selectedRequirement
+    ? totalSkillPointsEarned >= selectedRequirement.requiredSkillPoints
+    : false;
 
   return (
     <div className="pt-14 min-h-screen">
@@ -51,11 +106,12 @@ export default function SkillTreePage() {
               <h1 className="font-display text-[clamp(2rem,5vw,3rem)] text-white mb-2">
                 数学技能树
               </h1>
-              <p className="text-[var(--black-6)]">完成游戏关卡，解锁数学技能</p>
+              <p className="text-[var(--black-6)]">通关绑定游戏关卡并累计技能点，技能会自动解锁与升级</p>
             </div>
             <div className="liquid-glass px-4 py-2.5 rounded-lg">
-              <span className="text-sm text-[var(--black-6)]">可用技能点: </span>
-              <span className="font-mono-data text-lg text-[var(--gold)]">{skillPoints}</span>
+              <span className="text-sm text-[var(--black-6)]">累计技能点: </span>
+              <span className="font-mono-data text-lg text-[var(--gold)]">{totalSkillPointsEarned}</span>
+              <span className="text-xs text-[var(--black-6)] ml-2">(当前可用: {skillPoints})</span>
             </div>
           </div>
         </div>
@@ -92,9 +148,9 @@ export default function SkillTreePage() {
 
       {/* Skill Tree */}
       <section className="pb-24 px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="max-w-[1440px] mx-auto flex gap-8">
+        <div className="max-w-[1440px] mx-auto lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start gap-8">
           {/* Tree Grid */}
-          <div ref={treeRef} className="flex-1">
+          <div ref={treeRef}>
             {skillBranches.map(branch => {
               if (filter !== 'all' && filter !== branch.id) return null;
               const branchNodes = filteredNodes.filter(n => n.branch === branch.name);
@@ -113,6 +169,8 @@ export default function SkillTreePage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {branchNodes.map(node => {
                       const status = getNodeStatus(node);
+                      const nextRequirement = getNextRequirement(node, gameProgress as ProgressLookup);
+
                       return (
                         <button
                           key={node.id}
@@ -122,8 +180,8 @@ export default function SkillTreePage() {
                             status === 'unlocked'
                               ? 'border-[var(--success)]/30 bg-[var(--success)]/5'
                               : status === 'unlockable'
-                              ? 'border-[var(--accent)]/50 bg-[var(--accent)]/5 animation-pulse-glow'
-                              : 'border-[var(--black-3)] bg-[var(--black-2)] opacity-60'
+                                ? 'border-[var(--accent)]/50 bg-[var(--accent)]/5 animation-pulse-glow'
+                                : 'border-[var(--black-3)] bg-[var(--black-2)] opacity-60'
                           }`}
                         >
                           <div className="flex items-center gap-2 mb-2">
@@ -145,10 +203,15 @@ export default function SkillTreePage() {
                             </div>
                           </div>
                           <div className="text-xs text-[var(--black-6)] line-clamp-2">{node.description}</div>
-                          {status === 'unlockable' && (
-                            <div className="mt-2 text-xs text-[var(--accent)] font-medium">
-              需要 {node.cost} 技能点
-            </div>
+                          {nextRequirement && (
+                            <div className="mt-2 text-[10px] text-[var(--black-6)]">
+                              下一等级: 关卡≥{nextRequirement.requiredGameLevel} · 技能点≥{nextRequirement.requiredSkillPoints}
+                            </div>
+                          )}
+                          {!nextRequirement && (
+                            <div className="mt-2 text-[10px] text-[var(--gold)]">
+                              已满级
+                            </div>
                           )}
                         </button>
                       );
@@ -159,63 +222,80 @@ export default function SkillTreePage() {
             })}
           </div>
 
-          {/* Detail Panel */}
-          {selected && (
-            <div className="hidden lg:block w-80 shrink-0">
-              <div className="sticky top-20 liquid-glass rounded-2xl p-6">
-                <button onClick={() => setSelectedNode(null)} className="absolute top-4 right-4 text-[var(--black-6)] hover:text-white">
-                  <X size={16} />
-                </button>
+          {/* Detail Panel (fixed column, no layout shift) */}
+          <div className="hidden lg:block w-80 shrink-0">
+            <div className="sticky top-20 liquid-glass rounded-2xl p-6 relative min-h-[320px]">
+              {selected ? (
+                <>
+                  <button onClick={() => setSelectedNode(null)} className="absolute top-4 right-4 text-[var(--black-6)] hover:text-white">
+                    <X size={16} />
+                  </button>
 
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: selected.branchColor }}>
-                    <Star size={20} className="text-white fill-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">{selected.name}</h3>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: selected.branchColor }} />
-                      <span className="text-xs text-[var(--black-6)]">{selected.branch}</span>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: selected.branchColor }}>
+                      <Star size={20} className="text-white fill-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">{selected.name}</h3>
+                      <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: selected.branchColor }} />
+                        <span className="text-xs text-[var(--black-6)]">{selected.branch}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mb-4">
-                  <div className="text-xs text-[var(--black-6)] mb-1">等级</div>
-                  <div className="font-mono-data text-2xl text-white">
-                    Lv.{selected.level}<span className="text-[var(--black-6)]">/{selected.maxLevel}</span>
+                  <div className="mb-4">
+                    <div className="text-xs text-[var(--black-6)] mb-1">等级</div>
+                    <div className="font-mono-data text-2xl text-white">
+                      Lv.{selected.level}<span className="text-[var(--black-6)]">/{selected.maxLevel}</span>
+                    </div>
                   </div>
-                </div>
 
-                <p className="text-sm text-[var(--black-5)] mb-6">{selected.description}</p>
+                  <p className="text-sm text-[var(--black-5)] mb-4">{selected.description}</p>
 
-                {!selected.unlocked && selected.unlockable && (
-                  <button
-                    onClick={() => handleUnlock(selected.id)}
-                    disabled={skillPoints < selected.cost}
-                    className="w-full px-6 py-3 bg-[var(--accent)] rounded-lg text-white font-medium hover:bg-[var(--accent-dark)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    解锁 ({selected.cost} 技能点)
-                  </button>
-                )}
-
-                {selected.unlocked && selected.level < selected.maxLevel && (
-                  <button
-                    onClick={() => {}}
-                    className="w-full px-6 py-3 bg-[var(--success)]/20 border border-[var(--success)] rounded-lg text-[var(--success)] font-medium"
-                  >
-                    已解锁 (Lv.{selected.level})
-                  </button>
-                )}
-
-                {selected.unlocked && selected.level >= selected.maxLevel && (
-                  <div className="w-full px-6 py-3 bg-[var(--gold)]/20 border border-[var(--gold)] rounded-lg text-[var(--gold)] font-medium text-center">
-                    已满级
+                  <div className="mb-4 p-3 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)]">
+                    <div className="text-xs text-[var(--black-6)] mb-1">绑定游戏</div>
+                    <div className="text-sm text-white leading-relaxed">
+                      {selected.gameIds.length > 0
+                        ? selected.gameIds.map(gameId => gameNameMap.get(gameId) ?? gameId).join('、')
+                        : '未绑定'}
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {selectedRequirement ? (
+                    <div className="space-y-3">
+                      <div className="p-3 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)]">
+                        <div className="text-xs text-[var(--black-6)] mb-1">
+                          下一等级目标: Lv.{selectedRequirement.nextLevel}
+                        </div>
+                        <div className={`text-sm ${selectedParentRequirementMet ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                          {selectedParentRequirementMet ? '✓' : '✗'} 前置技能已满足
+                        </div>
+                        <div className={`text-sm ${selectedGameRequirementMet ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                          {selectedGameRequirementMet ? '✓' : '✗'} 绑定游戏关卡: {selectedRequirement.highestCompletedLevel}/{selectedRequirement.requiredGameLevel}
+                        </div>
+                        <div className={`text-sm ${selectedPointRequirementMet ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                          {selectedPointRequirementMet ? '✓' : '✗'} 累计技能点: {totalSkillPointsEarned}/{selectedRequirement.requiredSkillPoints}
+                        </div>
+                      </div>
+
+                      <div className="w-full px-4 py-3 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/40 text-[var(--accent)] text-sm text-center">
+                        技能等级会在达成条件后自动解锁/升级
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full px-4 py-3 bg-[var(--gold)]/20 border border-[var(--gold)] rounded-lg text-[var(--gold)] font-medium text-center">
+                      已满级
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="h-full flex items-center justify-center text-center text-sm text-[var(--black-6)]">
+                  点击左侧技能节点查看自动解锁条件
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </section>
     </div>

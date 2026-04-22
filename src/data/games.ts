@@ -353,12 +353,12 @@ export const skillNodes: SkillNode[] = [
   { id: 'number-sense-1', name: '基础运算', description: '掌握基本算术运算', branch: '数感', branchColor: '#3B82F6', level: 0, maxLevel: 5, unlocked: false, unlockable: true, parentIds: [], gameIds: ['sudoku', 'math24', 'number-pyramid'], cost: 1 },
   { id: 'number-sense-2', name: '速算大师', description: '提升心算速度与准确度', branch: '数感', branchColor: '#3B82F6', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['number-sense-1'], gameIds: ['magic-square', 'sliding-puzzle', 'number-race'], cost: 2 },
   { id: 'number-sense-3', name: '数论入门', description: '理解质数、因数等数论概念', branch: '数感', branchColor: '#3B82F6', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['number-sense-2'], gameIds: ['math24', 'bash-game', 'sunzi'], cost: 3 },
-  { id: 'number-sense-4', name: '质数猎人', description: '精通质数性质与应用', branch: '数感', branchColor: '#3B82F6', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['number-sense-3'], gameIds: [], cost: 4 },
+  { id: 'number-sense-4', name: '质数猎人', description: '精通质数性质与应用', branch: '数感', branchColor: '#3B82F6', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['number-sense-3'], gameIds: ['sunzi', 'math24'], cost: 4 },
 
   // 空间几何分支
   { id: 'spatial-geo-1', name: '平面直觉', description: '培养二维空间感知能力', branch: '空间几何', branchColor: '#10B981', level: 0, maxLevel: 5, unlocked: false, unlockable: true, parentIds: [], gameIds: ['tangram', 'sliding-puzzle', 'magic-square'], cost: 1 },
   { id: 'spatial-geo-2', name: '立体思维', description: '理解三维空间关系', branch: '空间几何', branchColor: '#10B981', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['spatial-geo-1'], gameIds: ['tangram', 'hanoi'], cost: 2 },
-  { id: 'spatial-geo-3', name: '对称感知', description: '识别和利用对称性', branch: '空间几何', branchColor: '#10B981', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['spatial-geo-2'], gameIds: [], cost: 3 },
+  { id: 'spatial-geo-3', name: '对称感知', description: '识别和利用对称性', branch: '空间几何', branchColor: '#10B981', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['spatial-geo-2'], gameIds: ['tangram', 'hanoi'], cost: 3 },
 
   // 逻辑推理分支
   { id: 'logic-reasoning-1', name: '排除法', description: '通过排除缩小可能性', branch: '逻辑推理', branchColor: '#8B5CF6', level: 0, maxLevel: 5, unlocked: false, unlockable: true, parentIds: [], gameIds: ['sudoku', 'minesweeper', 'river-crossing', 'einstein'], cost: 1 },
@@ -383,13 +383,13 @@ export const skillNodes: SkillNode[] = [
   // 概率统计分支
   { id: 'prob-stats-1', name: '概率直觉', description: '对概率的基本感知', branch: '概率统计', branchColor: '#EF4444', level: 0, maxLevel: 5, unlocked: false, unlockable: true, parentIds: [], gameIds: ['number-bomb', 'minesweeper'], cost: 1 },
   { id: 'prob-stats-2', name: '条件概率', description: '在已知条件下更新概率', branch: '概率统计', branchColor: '#EF4444', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['prob-stats-1'], gameIds: ['minesweeper'], cost: 2 },
-  { id: 'prob-stats-3', name: '贝叶斯思维', description: '用证据更新信念', branch: '概率统计', branchColor: '#EF4444', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['prob-stats-2'], gameIds: [], cost: 3 },
+  { id: 'prob-stats-3', name: '贝叶斯思维', description: '用证据更新信念', branch: '概率统计', branchColor: '#EF4444', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['prob-stats-2'], gameIds: ['minesweeper', 'number-bomb'], cost: 3 },
 
   // 算法思维分支
   { id: 'algo-thinking-1', name: '贪心策略', description: '每步都选当前最优', branch: '算法思维', branchColor: '#F97316', level: 0, maxLevel: 5, unlocked: false, unlockable: true, parentIds: [], gameIds: ['sliding-puzzle', 'river-crossing', 'number-bomb'], cost: 1 },
   { id: 'algo-thinking-2', name: '分治法', description: '将大问题分解为小问题', branch: '算法思维', branchColor: '#F97316', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['algo-thinking-1'], gameIds: ['nim', 'sliding-puzzle', 'hanoi'], cost: 2 },
   { id: 'algo-thinking-3', name: '动态规划', description: '记忆化搜索最优解', branch: '算法思维', branchColor: '#F97316', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['algo-thinking-2'], gameIds: ['hanoi'], cost: 3 },
-  { id: 'algo-thinking-4', name: '递归大师', description: '精通递归思维与应用', branch: '算法思维', branchColor: '#F97316', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['algo-thinking-3'], gameIds: [], cost: 4 },
+  { id: 'algo-thinking-4', name: '递归大师', description: '精通递归思维与应用', branch: '算法思维', branchColor: '#F97316', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['algo-thinking-3'], gameIds: ['hanoi', 'sliding-puzzle'], cost: 4 },
 ];
 
 export const levelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> = {
