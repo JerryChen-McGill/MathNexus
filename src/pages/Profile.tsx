@@ -49,6 +49,24 @@ const getNextRequirement = (node: SkillNode, gameProgress: ProgressLookup) => {
   };
 };
 
+const renderLevelCells = (level: number, maxLevel: number) => (
+  <div className="flex items-center gap-1">
+    {Array.from({ length: maxLevel }, (_, index) => {
+      const active = index < level;
+      return (
+        <span
+          key={index}
+          className={`w-2.5 h-2.5 rounded-[3px] border ${
+            active
+              ? 'bg-[var(--accent)] border-[var(--accent)]'
+              : 'bg-transparent border-[var(--black-4)]'
+          }`}
+        />
+      );
+    })}
+  </div>
+);
+
 export default function Profile() {
   const {
     playerName,
@@ -392,8 +410,11 @@ export default function Profile() {
                                     )}
                                     <span className="text-sm font-medium text-white">{node.name}</span>
                                   </div>
-                                  <div className="text-[11px] text-[var(--black-6)] mb-1">
-                                    Lv.{node.level}/{node.maxLevel}
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <div className="text-[11px] text-[var(--black-6)]">
+                                      Lv.{node.level}/{node.maxLevel}
+                                    </div>
+                                    {renderLevelCells(node.level, node.maxLevel)}
                                   </div>
                                   <div className="text-xs text-[var(--black-6)] line-clamp-2 mb-2">
                                     {node.description}
@@ -450,6 +471,9 @@ export default function Profile() {
               <div className="text-xs text-[var(--black-6)] mb-1">等级</div>
               <div className="font-mono-data text-2xl text-white">
                 Lv.{activeSkill.level}<span className="text-[var(--black-6)]">/{activeSkill.maxLevel}</span>
+              </div>
+              <div className="mt-2">
+                {renderLevelCells(activeSkill.level, activeSkill.maxLevel)}
               </div>
             </div>
 
