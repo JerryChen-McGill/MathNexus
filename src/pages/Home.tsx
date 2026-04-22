@@ -412,7 +412,7 @@ export default function Home() {
 
             <div className="flex justify-center">
               <img
-                src="/images/skilltree.jpg"
+                src="images/skilltree.jpg"
                 alt="Skill Tree"
                 className="w-full max-w-md rounded-2xl border border-[var(--black-3)] opacity-80 hover:opacity-100 transition-opacity duration-500"
               />
