@@ -1,3 +1,5 @@
+import { lighthouseLevels } from './lighthouse';
+
 export type GameCategory = 'number' | 'geometry' | 'logic' | 'strategy' | 'classic';
 
 export interface GameInfo {
@@ -55,6 +57,12 @@ export const categoryLabels: Record<GameCategory, string> = {
 };
 
 export const games: GameInfo[] = [
+  {
+    id: 'lighthouse', name: '灯塔解谜', description: '放置灯塔照亮所有白格，在光与影之间寻找逻辑。',
+    category: 'logic', categoryLabel: '逻辑与推理', difficulty: 'normal',
+    image: assetPath('images/lighthouse.svg'), levels: 10, unlockedLevel: 1,
+    completedLevels: 0, totalStars: 0, skills: ['logic-reasoning-1', 'spatial-geo-1'],
+  },
   {
     id: 'sudoku',
     name: '数独',
@@ -393,6 +401,7 @@ export const skillNodes: SkillNode[] = [
 ];
 
 export const levelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> = {
+  lighthouse: lighthouseLevels.map((puzzle, i) => ({ name: puzzle.name, params: { size: i + 2, timeLimit: 0 } })),
   'number-pyramid': [
     { name: '数塔初识', params: { size: 3, timeLimit: 0 } },
     { name: '三层练习', params: { size: 3, timeLimit: 300 } },

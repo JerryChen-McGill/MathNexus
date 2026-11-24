@@ -28,7 +28,10 @@ import ChickenRabbitGame from '@/games/ChickenRabbitGame';
 import SunziGame from '@/games/SunziGame';
 import KonigsbergGame from '@/games/KonigsbergGame';
 import NumberPyramidGame from '@/games/NumberPyramidGame';
+import LighthouseGame from '@/games/LighthouseGame';
+import { canPlayLevel } from '@/lib/access';
 const gameComponents: Record<string, React.FC<any>> = {
+'lighthouse': LighthouseGame,
 'sudoku': SudokuGame,
 'math24': Math24Game,
 'magic-square': MagicSquareGame,
@@ -54,9 +57,10 @@ export default function GameArena() {
   const { gameId = '', level: rawLevel = '' } = useParams();
   const [attempt, setAttempt] = useState(0);
   const unlocked = useGameStore(s => s.gameProgress[gameId]?.highestLevel ?? 1);
+  const token = useGameStore(s => s.userToken);
   const level = Number(rawLevel);
   if (!levelConfigs[gameId]) return <Navigate to="/games" replace/>;
-  if (!Number.isInteger(level) || level < 1 || level > levelConfigs[gameId].length || level > unlocked) return <Navigate to={`/program/${gameId}`} replace/>;
+  if (!canPlayLevel(level, levelConfigs[gameId].length, unlocked, token)) return <Navigate to={`/program/${gameId}`} replace/>;
   return <GameSession key={`${gameId}:${level}:${attempt}`} gameId={gameId} level={level} onRestart={() => setAttempt(n => n + 1)}/>;
 }
 function GameSession({ gameId, level, onRestart }: { gameId: string; level: number; onRestart: () => void }) {

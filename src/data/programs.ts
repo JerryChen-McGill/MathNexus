@@ -1,10 +1,12 @@
 export const programIcons: Record<string, string> = {
+  lighthouse: '☀',
   sudoku: '▦', math24: '24', 'magic-square': '✦', 'sliding-puzzle': '▤', nim: '●',
   'number-race': '➊', 'number-bomb': '?', 'number-pyramid': '△', tangram: '◭', hanoi: '▱',
   minesweeper: '⚑', 'tic-tac-toe': '×○', gomoku: '●○', einstein: '◎', 'river-crossing': '≈',
   'bash-game': '⋮', 'hundred-chicken': '♧', 'chicken-rabbit': '♧', sunzi: '余', konigsberg: '⌘',
 };
 export const quickRules: Record<string, string> = {
+  lighthouse: '点击白格放置或移除灯塔，光线沿上下左右传播，遇黑格停止。数字是黑格四周必须相邻的灯塔数，灯塔不能互相照射。照亮全部白格并满足所有数字即可通关。长按、右键或切换标记模式可标记禁放格。',
   sudoku: '选中空格，再点数字，让每行、每列和每个宫里的数字不重复。',
   math24: '使用给出的数字和运算符，让结果等于 24。',
   'magic-square': '选中空格填入数字，让每行、每列和对角线的和相等。',

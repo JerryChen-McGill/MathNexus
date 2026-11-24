@@ -5,6 +5,7 @@ import { games, levelConfigs } from '@/data/games';
 import { quickRules } from '@/data/programs';
 import { useGameStore } from '@/store/gameStore';
 import ProgramPicker from '@/components/ProgramPicker';
+import { isAdminToken } from '@/lib/access';
 
 export default function Program() {
   const { gameId = '' } = useParams();
@@ -15,6 +16,7 @@ function ProgramPath({ gameId }: { gameId: string }) {
   const game = games.find(g => g.id === gameId)!;
   const levels = levelConfigs[gameId];
   const progress = useGameStore(s => s.gameProgress[gameId]);
+  const admin = useGameStore(s => isAdminToken(s.userToken));
   const selectProgram = useGameStore(s => s.selectProgram);
   const current = progress.highestLevel;
   const complete = levels.every((_, i) => progress.levels[`level-${i + 1}`]?.completed);
@@ -43,7 +45,7 @@ function ProgramPath({ gameId }: { gameId: string }) {
             {levels.slice((ch - 1) * 5, ch * 5).map((config, i) => {
               const n = (ch - 1) * 5 + i + 1;
               const done = progress.levels[`level-${n}`]?.completed;
-              const unlocked = n <= current;
+              const unlocked = admin || n <= current;
               const active = n === current && !complete;
               return <div className={`path-stop stop-${i} ${active ? 'current-stop' : ''}`} key={n}>
                 {active && <span className="start-bubble">从这里继续</span>}
@@ -57,6 +59,7 @@ function ProgramPath({ gameId }: { gameId: string }) {
         </section>)}
       </div>
       <aside className="journey-note">
+        {admin && <p className="admin-status">管理员模式 · 全部关卡可玩</p>}
         <div className="little-star" aria-hidden="true">✦</div><h2>按你的节奏来</h2><p>一关也很好。遇到难题，休息一下，再试一次。</p>
         <details><summary><BookOpen size={18}/>怎么玩</summary><p>{quickRules[gameId]}</p></details>
         <details><summary><Sparkles size={18}/>我的关卡记录</summary>

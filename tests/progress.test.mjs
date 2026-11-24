@@ -63,7 +63,7 @@ test('store ignores duplicate and stale session settlements across programs', as
   globalThis.localStorage = { getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, v), removeItem: k => memory.delete(k) };
   globalThis.window = { localStorage: globalThis.localStorage };
   const { useGameStore: store, levelCounts } = await import('../node_modules/.cache/mathnexus/store.mjs');
-  assert.equal(Object.keys(levelCounts).length, 20);
+  assert.equal(Object.keys(levelCounts).length, 21);
   assert.ok(Object.values(levelCounts).every(count => count === 10));
   store.getState().resetProgress();
   store.getState().startGame('a', 'sudoku'); store.getState().startGame('a', 'sudoku');
@@ -87,4 +87,39 @@ test('store ignores duplicate and stale session settlements across programs', as
   assert.equal(store.getState().gameProgress.sudoku.highestLevel, 2);
   store.getState().resetProgress(); assert.equal(store.getState().rewards.xp, 0);
   assert.ok(memory.has('mathnexus-save'));
+
+  // A v4 save must gain the new program without losing existing records.
+  memory.set('mathnexus-save', JSON.stringify({ version: 4, state: {
+    playerName: '旧存档', totalScore: 123, gameProgress: { sudoku: { highestLevel: 2, levels: { 'level-1': completed } } },
+    rewards: { ...emptyRewards(), xp: 80 }, settings: { theme: 'dark' },
+  } }));
+  await store.persist.rehydrate();
+  assert.equal(store.getState().gameProgress.lighthouse.highestLevel, 1);
+  assert.equal(store.getState().gameProgress.sudoku.levels['level-1'].bestScore, 80);
+  assert.equal(store.getState().rewards.xp, 80);
+  assert.equal(store.getState().playerName, '旧存档');
+  assert.equal(store.getState().settings.theme, 'dark');
+  assert.equal(JSON.parse(memory.get('mathnexus-save')).version, 5);
+
+  for (const token of ['Jerry Chen', 'JerryChen', 'Jenny Wang', 'JennyWang']) {
+    store.getState().resetProgress();
+    assert.equal(store.getState().setUserToken(token), true);
+    const before = store.getState().gameProgress;
+    await store.persist.rehydrate();
+    assert.equal(store.getState().userToken, token);
+    assert.deepEqual(store.getState().gameProgress, before, 'granting access does not fabricate completion');
+    store.getState().startGame(token, 'lighthouse');
+    assert.equal(store.getState().completeLevel(token, 'lighthouse', 10, 100, 30, 3), 20);
+    assert.equal(store.getState().gameProgress.lighthouse.levels['level-10'].completed, true);
+    assert.equal(store.getState().gameProgress.lighthouse.highestLevel, 1);
+    assert.equal(store.getState().setUserToken('wrong'), false);
+    store.getState().startGame('locked', 'lighthouse');
+    assert.equal(store.getState().completeLevel('locked', 'lighthouse', 9, 100, 30, 3), 0);
+    store.getState().setUserToken(token);
+    for (const badLevel of [0, 11, 1.5, NaN]) {
+      assert.equal(store.getState().completeLevel('locked', 'lighthouse', badLevel, 100, 30, 3), 0);
+    }
+    store.getState().setUserToken('');
+    assert.equal(store.getState().userToken, '');
+  }
 });

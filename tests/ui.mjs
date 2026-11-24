@@ -34,7 +34,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 const errors = [];
 page.on('pageerror', e => errors.push(e.stack || e.message));
 page.on('console', m => { if (m.type() === 'error' && !m.text().includes('net::ERR')) errors.push(`${page.url()}: ${m.text()}`); });
-const ids = ['sudoku','math24','magic-square','sliding-puzzle','nim','number-race','number-bomb','number-pyramid','tangram','hanoi','minesweeper','tic-tac-toe','gomoku','einstein','river-crossing','bash-game','hundred-chicken','chicken-rabbit','sunzi','konigsberg'];
+const ids = ['sudoku','math24','magic-square','sliding-puzzle','nim','number-race','number-bomb','number-pyramid','tangram','hanoi','minesweeper','tic-tac-toe','gomoku','einstein','river-crossing','bash-game','hundred-chicken','chicken-rabbit','sunzi','konigsberg','lighthouse'];
 const goto = async path => { await page.goto(base + path, { waitUntil: 'domcontentloaded' }); await page.locator('main').waitFor(); await page.evaluate(() => new Promise(requestAnimationFrame)); };
 const overflow = async label => {
   const size = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: innerWidth }));
@@ -63,7 +63,7 @@ try {
     await goto('/program/sudoku');
     await page.getByRole('heading', { name: '这一程，真棒！' }).waitFor();
     const migrated = await page.evaluate(() => JSON.parse(localStorage.getItem('mathnexus-save')));
-    assert.equal(migrated.version, 4); assert.equal(migrated.state.rewards.xp, 120);
+    assert.equal(migrated.version, 5); assert.equal(migrated.state.rewards.xp, 120);
     assert.equal(migrated.state.gameProgress.sudoku.highestLevel, 10);
     assert.equal(migrated.state.rewards.badges.length, 2);
     assert.equal(migrated.state.playerName, '原来的探险家');
@@ -114,6 +114,40 @@ try {
   await goto('/games'); assert.match(page.url(), /program\/tangram$/);
   console.log('Core flow: start, input, pause/resume, picker, completion, next level, legacy routes passed');
 
+  for (const token of ['Jerry Chen', 'JerryChen', 'Jenny Wang', 'JennyWang']) {
+    await goto('/profile');
+    await page.getByRole('textbox', { name: '用户令牌', exact: true }).fill(token);
+    await page.getByRole('button', { name: '应用', exact: true }).click();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByText('管理员权限已开启 · 全部关卡可玩', { exact: true }).waitFor();
+    await goto('/program/lighthouse/play/10');
+    await page.getByRole('group', { name: '11乘11灯塔棋盘' }).waitFor();
+  }
+  await page.getByTestId('cell-0-0').click();
+  await page.getByTestId('cell-0-1').click();
+  await page.getByText('有灯塔互相照射，请调整位置。', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  assert.match(await page.getByTestId('cell-0-1').getAttribute('aria-label'), /空格/);
+  await page.getByRole('button', { name: '重做', exact: true }).click();
+  await page.getByText('有灯塔互相照射，请调整位置。', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '重置', exact: true }).click();
+  await page.getByRole('button', { name: '禁放标记', exact: true }).click();
+  await page.getByTestId('cell-0-0').click();
+  assert.match(await page.getByTestId('cell-0-0').getAttribute('aria-label'), /禁放标记/);
+  await page.getByTestId('cell-0-0').click({ button: 'right' });
+  assert.match(await page.getByTestId('cell-0-0').getAttribute('aria-label'), /空格/);
+  await goto('/profile');
+  await page.getByRole('button', { name: '清除令牌', exact: true }).click();
+  await goto('/program/lighthouse/play/10');
+  await page.getByRole('heading', { name: '下一小步，就从这里开始' }).waitFor();
+  assert.match(page.url(), /program\/lighthouse$/);
+  await goto('/program/lighthouse/play/1');
+  await page.getByTestId('cell-1-0').click();
+  await page.getByRole('heading', { name: '又一个小小胜利！' }).waitFor();
+  await page.getByRole('button', { name: '下一关', exact: true }).click();
+  await page.getByText('第 2 关 · 小试牛刀', { exact: true }).waitFor();
+  console.log('Four developer tokens, persistence, revocation and lighthouse interactions passed');
+
   // Representative UI at every required viewport, using a fresh program.
   for (const width of [360, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: width < 768 ? 844 : 1000 });
@@ -146,7 +180,7 @@ try {
       assert.ok(bounds.scroll <= bounds.width + 1, `${id}-${level}-${width}: controls must fit, only board region may scroll ${JSON.stringify(bounds)}`);
       if (width === 390 && level === 10) await page.screenshot({ path: `${output}/game-${id}.png`, fullPage: true });
     }
-    console.log(`20 games × first/final level verified at ${width}px`);
+    console.log(`${ids.length} games × first/final level verified at ${width}px`);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await goto('/program/minesweeper/play/10');
@@ -184,7 +218,7 @@ try {
   await page.getByRole('button', { name: '提交答案', exact: true }).waitFor();
   assert.match(page.url(), /chicken-rabbit\/play\/2$/);
   assert.deepEqual(errors, []);
-  await writeFile(`${output}/ui-results.json`, JSON.stringify({ passed: true, gameViewportChecks: 200, errors }, null, 2));
+  await writeFile(`${output}/ui-results.json`, JSON.stringify({ passed: true, gameViewportChecks: ids.length * 2 * 5, errors }, null, 2));
   console.log('Touch flagging, local scrolling, orientation, AI pause, runtime errors: passed');
   }
 } catch (error) {

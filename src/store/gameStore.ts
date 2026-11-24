@@ -3,15 +3,17 @@ import { persist } from 'zustand/middleware';
 import { levelConfigs } from '@/data/games';
 import { chapterBadges, earnRewards, emptyRewards, localDate, migrateProgress, normalizeProgress } from '@/lib/progress';
 import type { GameProgress, Rewards, SavedProgress } from '@/lib/progress';
+import { canPlayLevel, isAdminToken } from '@/lib/access';
 
 export const levelCounts = Object.fromEntries(Object.entries(levelConfigs).map(([id, levels]) => [id, levels.length]));
 interface Settings { soundEnabled: boolean; musicEnabled: boolean; difficulty: 'easy' | 'normal' | 'hard'; theme: 'dark' | 'light' }
 interface Stats { totalGamesPlayed: number; totalTimePlayed: number; totalWins: number; totalLosses: number }
 interface State {
-  playerName: string; totalScore: number; gameProgress: Record<string, GameProgress>;
+  playerName: string; userToken: string; totalScore: number; gameProgress: Record<string, GameProgress>;
   rewards: Rewards; recentProgram: string; settings: Settings; stats: Stats;
   seenHints: string[]; activeSession: string | null; settledSession: string | null;
   setPlayerName: (name: string) => void;
+  setUserToken: (token: string) => boolean;
   selectProgram: (id: string) => void;
   dismissHint: (id: string) => void;
   startGame: (session: string, gameId: string) => void;
@@ -23,10 +25,11 @@ interface State {
 const defaultSettings: Settings = { soundEnabled: true, musicEnabled: true, difficulty: 'normal', theme: 'light' };
 const defaultStats = (): Stats => ({ totalGamesPlayed: 0, totalTimePlayed: 0, totalWins: 0, totalLosses: 0 });
 export const useGameStore = create<State>()(persist((set, get) => ({
-  playerName: '数学探险家', totalScore: 0, gameProgress: normalizeProgress({}, levelCounts),
+  playerName: '数学探险家', userToken: '', totalScore: 0, gameProgress: normalizeProgress({}, levelCounts),
   rewards: emptyRewards(), recentProgram: 'sudoku', settings: defaultSettings, stats: defaultStats(),
   seenHints: [], activeSession: null, settledSession: null,
   setPlayerName: name => set({ playerName: name.trim().slice(0, 24) || '数学探险家' }),
+  setUserToken: token => { const valid = isAdminToken(token); set({ userToken: valid ? token.trim() : '' }); return valid; },
   selectProgram: id => { if (levelCounts[id]) set({ recentProgram: id }); },
   dismissHint: id => set({ seenHints: [...new Set([...get().seenHints, id])] }),
   startGame: (session, gameId) => {
@@ -36,7 +39,7 @@ export const useGameStore = create<State>()(persist((set, get) => ({
   },
   completeLevel: (session, id, level, score, time, stars) => {
     const state = get();
-    if (state.activeSession !== session || state.settledSession === session || !levelCounts[id] || level < 1 || level > state.gameProgress[id].highestLevel) return 0;
+    if (state.activeSession !== session || state.settledSession === session || !canPlayLevel(level, levelCounts[id] ?? 0, state.gameProgress[id]?.highestLevel ?? 1, state.userToken)) return 0;
     const existing = state.gameProgress[id].levels[`level-${level}`];
     const levels = { ...state.gameProgress[id].levels, [`level-${level}`]: {
       completed: true, bestScore: Math.max(existing?.bestScore ?? 0, score),
@@ -51,7 +54,7 @@ export const useGameStore = create<State>()(persist((set, get) => ({
   },
   failLevel: (session, id, level) => {
     const state = get();
-    if (state.activeSession !== session || state.settledSession === session) return;
+    if (state.activeSession !== session || state.settledSession === session || !canPlayLevel(level, levelCounts[id] ?? 0, state.gameProgress[id]?.highestLevel ?? 1, state.userToken)) return;
     const progress = state.gameProgress[id];
     const existing = progress.levels[`level-${level}`];
     set({ settledSession: session, gameProgress: { ...state.gameProgress, [id]: { ...progress, levels: {
@@ -62,13 +65,13 @@ export const useGameStore = create<State>()(persist((set, get) => ({
   resetProgress: () => set({ totalScore: 0, gameProgress: normalizeProgress({}, levelCounts), rewards: emptyRewards(),
     recentProgram: 'sudoku', stats: defaultStats(), seenHints: [], activeSession: null, settledSession: null }),
 }), {
-  name: 'mathnexus-save', version: 4,
-  partialize: state => ({ playerName: state.playerName, totalScore: state.totalScore, gameProgress: state.gameProgress,
+  name: 'mathnexus-save', version: 5,
+  partialize: state => ({ playerName: state.playerName, userToken: state.userToken, totalScore: state.totalScore, gameProgress: state.gameProgress,
     rewards: state.rewards, recentProgram: state.recentProgram, settings: state.settings, stats: state.stats, seenHints: state.seenHints }),
   migrate: persisted => {
     const saved = (persisted ?? {}) as Partial<State> & SavedProgress;
     const migrated = migrateProgress(saved, levelCounts);
-    return { playerName: saved.playerName ?? '数学探险家', totalScore: saved.totalScore ?? 0,
+    return { playerName: saved.playerName ?? '数学探险家', userToken: typeof saved.userToken === 'string' && isAdminToken(saved.userToken) ? saved.userToken : '', totalScore: saved.totalScore ?? 0,
       ...migrated, settings: { ...defaultSettings, ...migrated.settings },
       stats: { ...defaultStats(), ...saved.stats }, seenHints: saved.seenHints ?? [] };
   },

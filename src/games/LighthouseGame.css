@@ -1,0 +1,38 @@
+.game-content > .lighthouse-game { max-width: 650px; margin: auto; padding: 24px; border-radius: 24px; background: linear-gradient(145deg, #171a32, #123756); color: #edf2ff; box-shadow: 0 12px 36px #101a3020; }
+.lighthouse-intro { text-align: center; }
+.lighthouse-emblem { display: inline-flex; padding: 10px; border-radius: 16px; color: #ffe29a; background: #ffffff0d; }
+.lighthouse-intro h2 { font-size: 1.12rem; margin: 12px 0 6px; color: #fff3ce; }
+.lighthouse-intro p { font-size: .85rem; color: #b1c0d9; }
+.lighthouse-stats { display: flex; justify-content: center; flex-wrap: wrap; gap: 18px; margin: 22px 0; font-size: .95rem; }
+.lighthouse-stats > span { display: flex; align-items: center; gap: 6px; }
+.lighthouse-stats strong, .lighthouse-stats svg { color: #ffe29a; }
+.lighthouse-stats small { color: #b1c0d9; font-size: .75rem; }
+.lighthouse-board-wrap { display: flex; justify-content: center; }
+.lighthouse-board { display: grid; gap: 3px; padding: 5px; border-radius: 12px; background: #080f21; box-shadow: 0 0 0 1px #ffffff17; }
+.game-content .lighthouse-cell { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 0 !important; min-height: 0; padding: 0; border: 2px solid transparent; border-radius: 4px; background: #e5e9f0; color: #53637b; touch-action: manipulation; user-select: none; -webkit-touch-callout: none; font-size: clamp(12px, 3vw, 22px); }
+.lighthouse-cell.lit { background: #fff0ad; color: #8a6725; }
+.lighthouse-cell.has-light { background: #ffda70; color: #704713; }
+.lighthouse-cell svg { width: 60%; height: 60%; max-width: 28px; max-height: 28px; }
+.lighthouse-cell.wall { background: #111b30; color: #dae3f2; }
+.lighthouse-cell.wall small { font-size: .65em; opacity: .8; }
+.lighthouse-cell.matched { color: #96e6ad; }
+.lighthouse-cell.overfilled { color: #ff9ba1; border-color: #ff8b92; }
+.lighthouse-cell.conflict { background: #ffb7ac; color: #7e2027; border-color: #e76b77; }
+.lighthouse-cell:focus-visible { outline: 3px solid #83ddff; outline-offset: 1px; z-index: 1; }
+.lighthouse-mode { display: flex; justify-content: center; gap: 4px; margin: 22px auto 12px; padding: 4px; width: fit-content; max-width: 100%; border-radius: 13px; background: #ffffff0d; }
+.lighthouse-mode button, .lighthouse-controls button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-height: 44px; padding: 8px 14px; border-radius: 9px; font-size: .85rem; }
+.lighthouse-mode button[aria-pressed=true] { background: #ffe29a; color: #493713; }
+.lighthouse-controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; }
+.lighthouse-controls button { background: #ffffff0d; border: 1px solid #ffffff20; }
+.lighthouse-controls button[aria-pressed=true] { border-color: #ffe29a; color: #ffe29a; }
+.lighthouse-controls button:disabled { opacity: .35; cursor: not-allowed; }
+.lighthouse-feedback { min-height: 40px; margin: 16px 0 8px; color: #d3dff0; text-align: center; font-size: .8rem; }
+.lighthouse-rules { color: #b1c0d9; font-size: .8rem; border-top: 1px solid #ffffff20; padding-top: 12px; }
+.lighthouse-rules summary { color: #edf2ff; cursor: pointer; padding: 6px 0; }
+.lighthouse-rules ul { padding-left: 18px; list-style: disc; line-height: 1.9; }
+@media (max-width: 600px) {
+  .game-content > .lighthouse-game { padding: 16px 10px; border-radius: 18px; }
+  .lighthouse-board { gap: 2px; padding: 3px; }
+  .lighthouse-cell { border-width: 1px !important; }
+  .lighthouse-controls button { padding: 8px 10px; gap: 5px; }
+}
