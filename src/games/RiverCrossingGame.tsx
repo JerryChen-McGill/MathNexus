@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -15,6 +16,7 @@ interface Entity {
 }
 
 export default function RiverCrossingGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { timeLimit = 0 } = config.params;
   const [leftBank, setLeftBank] = useState<Entity[]>([]);
   const [rightBank, setRightBank] = useState<Entity[]>([]);

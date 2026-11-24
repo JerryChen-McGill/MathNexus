@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function NumberRaceGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, clearTimeout } = useGameClock();
   const { target = 30, maxStep = 3, variant = 0 } = config.params;
   const [current, setCurrent] = useState(0);
   const [currentPlayer, setCurrentPlayer] = useState<'human' | 'ai'>('human');
@@ -111,7 +113,7 @@ export default function NumberRaceGame({ level, config, onComplete, onFail }: Pr
       {currentPlayer === 'human' && !gameOver && (
         <div className="flex flex-col items-center gap-3 p-4 rounded-xl bg-[var(--black-2)] border border-[var(--black-3)] w-full">
           <div className="text-sm text-[var(--black-6)]">报几个数? (1-{maxStep})</div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             {Array.from({ length: maxStep }, (_, i) => i + 1).map(step => (
               <button
                 key={step}

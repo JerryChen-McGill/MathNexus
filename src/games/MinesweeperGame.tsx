@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect, useCallback } from 'react';
 
 interface Props {
@@ -56,10 +57,12 @@ const numberColors: Record<number, string> = {
 };
 
 export default function MinesweeperGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { width = 9, height = 9, mines = 10, timeLimit = 0 } = config.params;
   const [board, setBoard] = useState<Cell[][]>([]);
   const [gameState, setGameState] = useState<'ready' | 'playing' | 'won' | 'lost'>('ready');
   const [flags, setFlags] = useState(0);
+  const [flagMode, setFlagMode] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [revealedCount, setRevealedCount] = useState(0);
 
@@ -128,6 +131,7 @@ export default function MinesweeperGame({ level, config, onComplete, onFail }: P
 
     if (gameState === 'ready') {
       newBoard = generateBoard(w, h, m, r, c);
+      newBoard = newBoard.map((row, ri) => row.map((cell, ci) => ({ ...cell, state: board[ri][ci].state })));
       setGameState('playing');
     }
 
@@ -156,8 +160,7 @@ export default function MinesweeperGame({ level, config, onComplete, onFail }: P
     }
   };
 
-  const handleRightClick = (e: React.MouseEvent, r: number, c: number) => {
-    e.preventDefault();
+  const toggleFlag = (r: number, c: number) => {
     if (gameState === 'won' || gameState === 'lost') return;
     if (board[r][c].state === 'revealed') return;
 
@@ -174,10 +177,14 @@ export default function MinesweeperGame({ level, config, onComplete, onFail }: P
 
   const cellSize = w <= 8 ? 'w-9 h-9 sm:w-10 sm:h-10 text-sm' :
     w <= 16 ? 'w-7 h-7 sm:w-8 sm:h-8 text-xs' :
-    'w-5 h-5 sm:w-6 sm:h-6 text-[10px]';
+    'w-7 h-7 sm:w-8 sm:h-8 text-xs';
 
   return (
     <div className="flex flex-col items-center h-full">
+      <div className="mine-modes" role="group" aria-label="扫雷操作模式">
+        <button className={!flagMode ? 'selected' : ''} aria-pressed={!flagMode} onClick={() => setFlagMode(false)}>翻开</button>
+        <button className={flagMode ? 'selected' : ''} aria-pressed={flagMode} onClick={() => setFlagMode(true)}>插旗</button>
+      </div>
       <div className="flex items-center gap-6 mb-4">
         <div className="text-sm text-[var(--black-6)]">
           地雷: <span className="font-mono-data text-[var(--danger)]">{m - flags}</span>
@@ -189,6 +196,7 @@ export default function MinesweeperGame({ level, config, onComplete, onFail }: P
         )}
       </div>
 
+      <div className="board-viewport" tabIndex={0} role="region" aria-label="扫雷棋盘，可左右滚动">
       <div
         className="grid gap-0.5 p-2 rounded-xl bg-[var(--black-2)] border border-[var(--black-3)]"
         style={{ gridTemplateColumns: `repeat(${w}, 1fr)` }}
@@ -197,8 +205,9 @@ export default function MinesweeperGame({ level, config, onComplete, onFail }: P
           row.map((cell, ci) => (
             <button
               key={`${ri}-${ci}`}
-              onClick={() => handleClick(ri, ci)}
-              onContextMenu={(e) => handleRightClick(e, ri, ci)}
+              aria-label={`第${ri + 1}行第${ci + 1}列，${cell.state === 'flagged' ? '已插旗' : cell.state === 'hidden' ? '未翻开' : cell.value < 0 ? '地雷' : cell.value}`}
+              onClick={() => flagMode ? toggleFlag(ri, ci) : handleClick(ri, ci)}
+              onContextMenu={(e) => { e.preventDefault(); toggleFlag(ri, ci); }}
               className={`${cellSize} rounded font-mono-data font-bold flex items-center justify-center transition-all duration-150 ${
                 cell.state === 'hidden'
                   ? 'bg-[var(--black-3)] border-2 border-[var(--black-2)] border-b-[var(--black-5)] border-r-[var(--black-5)] hover:bg-[var(--black-4)] active:border-none'
@@ -218,9 +227,10 @@ export default function MinesweeperGame({ level, config, onComplete, onFail }: P
           ))
         )}
       </div>
+      </div>
 
       <div className="mt-3 text-xs text-[var(--black-6)]">
-        左键揭开 · 右键标记旗帜
+        切换模式后点击格子 · 鼠标右键也可插旗
       </div>
     </div>
   );

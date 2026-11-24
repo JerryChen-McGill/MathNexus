@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -20,6 +21,7 @@ const shapes = [
 const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4', '#F97316'];
 
 export default function TangramGame({ level, config, onComplete }: Props) {
+  const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { timeLimit = 0 } = config.params;
   const [placed, setPlaced] = useState<Set<number>>(new Set());
   const [selectedShape, setSelectedShape] = useState<number | null>(null);
@@ -98,10 +100,8 @@ export default function TangramGame({ level, config, onComplete }: Props) {
       {/* Shape palette */}
       <div className="flex flex-wrap justify-center gap-3">
         {shapes.map(shape => (
-          <button
+          <div
             key={shape.id}
-            onClick={() => !placed.has(shape.id) && handlePlaceShape(shape.id)}
-            disabled={placed.has(shape.id)}
             className={`relative p-2 rounded-lg border transition-all ${
               placed.has(shape.id)
                 ? 'border-[var(--success)]/30 bg-[var(--success)]/5 opacity-50'
@@ -110,13 +110,15 @@ export default function TangramGame({ level, config, onComplete }: Props) {
                 : 'border-[var(--black-3)] bg-[var(--black-2)] hover:border-[var(--accent)]/30'
             }`}
           >
+            <button aria-label={`放置${shape.name}`} disabled={placed.has(shape.id)} onClick={() => handlePlaceShape(shape.id)}>
             <svg viewBox="0 0 100 100" width="50" height="50" style={{ transform: `rotate(${rotations[shape.id] || 0}deg)` }}>
               <polygon points={toSvgPoints(shape.points)} fill={colors[shape.id]} fillOpacity="0.6" stroke="white" strokeWidth="1" />
-            </svg>
+            </svg></button>
             {!placed.has(shape.id) && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleRotate(shape.id); }}
-                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[var(--black-3)] text-[10px] text-white hover:bg-[var(--accent)]"
+                aria-label={`旋转${shape.name}`}
+                className="block w-full rounded-lg bg-[var(--black-3)] text-sm text-white hover:bg-[var(--accent)]"
               >
                 ↻
               </button>
@@ -126,7 +128,7 @@ export default function TangramGame({ level, config, onComplete }: Props) {
                 <span className="text-[var(--success)] text-lg">✓</span>
               </div>
             )}
-          </button>
+          </div>
         ))}
       </div>
 

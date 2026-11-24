@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -59,6 +60,7 @@ function permutations(arr: number[]): number[][] {
 }
 
 export default function Math24Game({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { maxNum = 9, questions = 5, timeLimit = 0 } = config.params;
   const [numbers, setNumbers] = useState<number[]>([]);
   const [expression, setExpression] = useState('');

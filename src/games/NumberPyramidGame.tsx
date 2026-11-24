@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -29,10 +30,14 @@ function generatePyramid(rows: number): { bottom: number[]; target: number } {
     pyramid[r] = pyramid[r].map(v => Math.round(v));
   }
 
-  return { bottom: pyramid[rows - 1], target: pyramid[0][0] };
+  const bottom = pyramid[rows - 1];
+  let values = [...bottom];
+  while (values.length > 1) values = values.slice(0, -1).map((value, i) => Math.round((value + values[i + 1]) / 2));
+  return { bottom, target: values[0] };
 }
 
 export default function NumberPyramidGame({ level, config, onComplete, onFail }: Props) {
+  const { setInterval, clearInterval } = useGameClock();
   const { size = 5, timeLimit = 0 } = config.params;
   const rows = Math.min(Number(size) || 5, 8);
   const [bottom, setBottom] = useState<number[]>([]);
@@ -81,7 +86,7 @@ export default function NumberPyramidGame({ level, config, onComplete, onFail }:
   let currentRow = [...bottom];
   pyramidRows.push(currentRow);
 
-  for (let r = rows - 2; r >= 0; r--) {
+  for (let r = currentRow.length - 2; r >= 0; r--) {
     const nextRow: number[] = [];
     for (let c = 0; c <= r; c++) {
       const left = currentRow[c];
@@ -99,7 +104,7 @@ export default function NumberPyramidGame({ level, config, onComplete, onFail }:
       <div className="text-sm text-[var(--black-5)] mb-4 text-center">{message}</div>
 
       {/* Pyramid */}
-      <div className="flex flex-col items-center gap-2 mb-6">
+      <div className="pyramid-diagram flex flex-col items-center gap-2 mb-6">
         {/* Target (hidden) */}
         <div className="w-16 h-12 rounded-lg bg-[var(--accent)]/20 border-2 border-[var(--accent)] flex items-center justify-center mb-2">
           <span className="font-mono-data text-lg text-[var(--accent)]">?</span>

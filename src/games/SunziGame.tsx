@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function SunziGame({ level, config, onComplete, onFail }: Props) {
+  const { setInterval, clearInterval } = useGameClock();
   const { mod3 = 2, mod5 = 3, mod7 = 2, mod11 = 0, timeLimit = 0 } = config.params;
   const [answer, setAnswer] = useState('');
   const [timeLeft, setTimeLeft] = useState(timeLimit);

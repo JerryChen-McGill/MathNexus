@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function ChickenRabbitGame({ level, config, onComplete, onFail }: Props) {
+  const { setInterval, clearInterval } = useGameClock();
   const { heads = 35, legs = 94, timeLimit = 0 } = config.params;
   const [chicken, setChicken] = useState('');
   const [rabbit, setRabbit] = useState('');

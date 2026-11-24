@@ -1,0 +1,28 @@
+export const programIcons: Record<string, string> = {
+  sudoku: '▦', math24: '24', 'magic-square': '✦', 'sliding-puzzle': '▤', nim: '●',
+  'number-race': '➊', 'number-bomb': '?', 'number-pyramid': '△', tangram: '◭', hanoi: '▱',
+  minesweeper: '⚑', 'tic-tac-toe': '×○', gomoku: '●○', einstein: '◎', 'river-crossing': '≈',
+  'bash-game': '⋮', 'hundred-chicken': '♧', 'chicken-rabbit': '♧', sunzi: '余', konigsberg: '⌘',
+};
+export const quickRules: Record<string, string> = {
+  sudoku: '选中空格，再点数字，让每行、每列和每个宫里的数字不重复。',
+  math24: '使用给出的数字和运算符，让结果等于 24。',
+  'magic-square': '选中空格填入数字，让每行、每列和对角线的和相等。',
+  'sliding-puzzle': '点击空格旁的方块，将数字按从小到大的顺序排列。',
+  nim: '每次从同一堆取走石子，留意本关最后一颗石子的胜负规则。',
+  'number-race': '轮流报数，利用允许的步长到达目标；留意本关的胜负规则。',
+  'number-bomb': '输入猜测，根据提示缩小范围，找到隐藏数字。',
+  'number-pyramid': '相邻两数的平均值四舍五入，逐层推算塔顶数字。',
+  tangram: '点击拼图放入目标区域，也可以先旋转拼图。',
+  hanoi: '先点起点柱，再点终点柱；小盘必须放在大盘上方。',
+  minesweeper: '点格子翻开；切换到插旗可标记地雷。数字代表周围的地雷数。',
+  'tic-tac-toe': '点击空格落子，先连成指定数量的一行就获胜。',
+  gomoku: '点击空位落子，先让五颗棋子连成一线。',
+  einstein: '结合线索，点击格子标记对错，再提交你的推理。',
+  'river-crossing': '选择乘客再开船，确保两岸都不发生冲突。',
+  'bash-game': '轮流取走石子，每次不超过上限，争取取走最后一颗。',
+  'hundred-chicken': '根据题目输入各类鸡的数量，同时满足总数与总价。',
+  'chicken-rabbit': '根据头数与脚数，计算鸡和兔各有多少只。',
+  sunzi: '根据各个除数与余数，找出符合条件的数字。',
+  konigsberg: '点击相连的区域过桥，每座桥只能经过一次。',
+};

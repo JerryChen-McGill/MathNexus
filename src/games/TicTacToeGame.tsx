@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -100,6 +101,7 @@ function getAIMove(board: (string | null)[], size: number, winLen: number, depth
 }
 
 export default function TicTacToeGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, clearTimeout } = useGameClock();
   const { size = 3, win = 3, depth = 3 } = config.params;
   const [board, setBoard] = useState<(string | null)[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<'X' | 'O'>('X');

@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Clue {
 }
 
 export default function EinsteinGame({ level, config, onComplete, onFail }: Props) {
+  const { setInterval, clearInterval } = useGameClock();
   const { clues = 5, timeLimit = 0 } = config.params;
   const [, setGrid] = useState<string[][]>([]);
   const [clueList, setClueList] = useState<Clue[]>([]);

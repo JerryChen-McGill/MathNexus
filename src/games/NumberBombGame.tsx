@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function NumberBombGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { max = 100, guesses: maxGuesses = 0, timeLimit = 0 } = config.params;
   const [target, setTarget] = useState(0);
   const [guess, setGuess] = useState('');

@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -90,6 +91,7 @@ function getGomokuAIMove(board: (string | null)[], size: number, win: number, _d
 }
 
 export default function GomokuGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, clearTimeout } = useGameClock();
   const { size = 15, win = 5 } = config.params;
   const [board, setBoard] = useState<(string | null)[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<'X' | 'O'>('X');
@@ -156,7 +158,7 @@ export default function GomokuGame({ level, config, onComplete, onFail }: Props)
     }
   };
 
-  const cellSize = 'w-6 h-6 sm:w-7 sm:h-7 text-xs';
+  const cellSize = 'w-7 h-7 sm:w-8 sm:h-8 text-xs';
 
   return (
     <div className="flex flex-col items-center h-full overflow-auto">
@@ -169,6 +171,7 @@ export default function GomokuGame({ level, config, onComplete, onFail }: Props)
         </div>
       </div>
 
+      <div className="board-viewport" tabIndex={0} role="region" aria-label="五子棋棋盘，可左右滚动">
       <div
         className="grid gap-0 p-2 rounded-xl bg-[var(--black-2)] border border-[var(--black-3)] shrink-0"
         style={{ gridTemplateColumns: `repeat(${s}, 1fr)` }}
@@ -187,6 +190,7 @@ export default function GomokuGame({ level, config, onComplete, onFail }: Props)
             {cell}
           </button>
         ))}
+      </div>
       </div>
 
       <div className="mt-2 text-xs text-[var(--black-6)] shrink-0">

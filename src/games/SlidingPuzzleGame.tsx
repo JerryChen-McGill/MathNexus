@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -51,6 +52,7 @@ function isSolved(grid: number[][]): boolean {
 }
 
 export default function SlidingPuzzleGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { size = 4, shuffle = 200, timeLimit = 0 } = config.params;
   const [grid, setGrid] = useState<number[][]>([]);
   const [moves, setMoves] = useState(0);

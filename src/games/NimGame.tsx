@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -40,6 +41,7 @@ function getOptimalMove(piles: number[], misere: boolean): [number, number] {
 }
 
 export default function NimGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, clearTimeout } = useGameClock();
   const { piles = 3, maxStones = 10, variant = 0 } = config.params;
   const [pileList, setPileList] = useState<number[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<'human' | 'ai'>('human');
@@ -141,7 +143,7 @@ export default function NimGame({ level, config, onComplete, onFail }: Props) {
       </div>
 
       {/* Piles */}
-      <div className="flex gap-6 mb-6">
+      <div className="flex flex-wrap justify-center gap-3 mb-6 w-full">
         {pileList.map((count, i) => (
           <button
             key={i}

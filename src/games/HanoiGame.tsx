@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Disk {
 }
 
 export default function HanoiGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { disks = 4, timeLimit = 0 } = config.params;
   const d = Number(disks) || 4;
   const optimalMoves = Math.pow(2, d) - 1;
@@ -95,10 +97,11 @@ export default function HanoiGame({ level, config, onComplete, onFail }: Props) 
         {timeLimit > 0 && <div className="text-sm text-[var(--black-6)]">剩余: <span className="font-mono-data text-[var(--accent)]">{timeLeft}s</span></div>}
       </div>
 
-      <div className="flex gap-8 sm:gap-16">
+      <div className="hanoi-towers flex">
         {towers.map((tower, ti) => (
           <button
             key={ti}
+            aria-label={`柱子${['A', 'B', 'C'][ti]}`}
             onClick={() => handleTowerClick(ti)}
             className={`relative flex flex-col items-center justify-end w-24 sm:w-32 h-64 sm:h-80 pb-2 ${
               selectedTower === ti ? 'bg-[var(--accent)]/5 rounded-xl' : ''
@@ -114,7 +117,7 @@ export default function HanoiGame({ level, config, onComplete, onFail }: Props) 
                   key={`${disk.id}-${di}`}
                   className="h-6 sm:h-7 rounded-md transition-all duration-300"
                   style={{
-                    width: `${40 + disk.size * (80 / d)}%`,
+                    width: `${30 + disk.size * (65 / d)}%`,
                     backgroundColor: diskColors[disk.size % diskColors.length],
                     boxShadow: di === tower.length - 1 && selectedTower === ti ? `0 0 10px ${diskColors[disk.size % diskColors.length]}` : 'none',
                     transform: di === tower.length - 1 && selectedTower === ti ? 'translateY(-10px)' : 'none',

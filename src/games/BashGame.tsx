@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function BashGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, clearInterval } = useGameClock();
   const { total = 21, maxTake = 3 } = config.params;
   const [stones, setStones] = useState(total);
   const [currentPlayer, setCurrentPlayer] = useState<'human' | 'ai'>('human');

@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -68,6 +69,7 @@ function checkMagicSquare(grid: number[][], n: number): boolean {
 }
 
 export default function MagicSquareGame({ level, config, onComplete }: Props) {
+  const { setTimeout } = useGameClock();
   const { size = 3, prefill = 4 } = config.params;
   const n = Number(size) || 3;
   const target = n * (n * n + 1) / 2;
@@ -118,9 +120,7 @@ export default function MagicSquareGame({ level, config, onComplete }: Props) {
   const getRowSum = (r: number) => grid[r]?.reduce((a, b) => a + (b || 0), 0) || 0;
   const getColSum = (c: number) => grid.reduce((a, row) => a + (row[c] || 0), 0);
 
-  const cellSize = n <= 3 ? 'w-16 h-16 sm:w-20 sm:h-20 text-xl' :
-    n <= 5 ? 'w-12 h-12 sm:w-14 sm:h-14 text-lg' :
-    'w-10 h-10 sm:w-11 sm:h-11 text-base';
+  const cellSize = 'magic-cell text-base';
 
   return (
     <div className="flex flex-col items-center h-full">
@@ -128,6 +128,7 @@ export default function MagicSquareGame({ level, config, onComplete }: Props) {
         目标和: <span className="font-mono-data text-[var(--accent)]">{target}</span>
       </div>
 
+      <div className="board-viewport" tabIndex={0} role="region" aria-label="幻方棋盘，可左右滚动"><div className="board-surface">
       <div className="flex gap-4">
         {/* Grid */}
         <div>
@@ -158,7 +159,7 @@ export default function MagicSquareGame({ level, config, onComplete }: Props) {
         {/* Sums */}
         <div className="flex flex-col gap-1">
           {Array.from({ length: n }, (_, i) => (
-            <div key={i} className={`h-[${n <= 3 ? '80' : '56'}px] flex items-center`}>
+            <div key={i} className="magic-sum">
               <span className={`text-xs font-mono-data ${getRowSum(i) === target ? 'text-[var(--success)]' : 'text-[var(--black-5)]'}`}>
                 {getRowSum(i)}
               </span>
@@ -170,7 +171,7 @@ export default function MagicSquareGame({ level, config, onComplete }: Props) {
       {/* Column sums */}
       <div className="flex gap-1 mt-2 ml-0">
         {Array.from({ length: n }, (_, i) => (
-          <div key={i} className={`w-16 sm:w-20 text-center`}>
+          <div key={i} className="magic-column text-center">
             <span className={`text-xs font-mono-data ${getColSum(i) === target ? 'text-[var(--success)]' : 'text-[var(--black-5)]'}`}>
               {getColSum(i)}
             </span>
@@ -178,6 +179,7 @@ export default function MagicSquareGame({ level, config, onComplete }: Props) {
         ))}
       </div>
 
+      </div></div>
       {/* Number Pad */}
       <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-xs">
         {Array.from({ length: n * n }, (_, i) => i + 1).map(num => (

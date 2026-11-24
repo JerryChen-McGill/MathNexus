@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect, useCallback } from 'react';
 
 interface SudokuGameProps {
@@ -82,6 +83,7 @@ function generateSudoku(size: number, prefill: number): { puzzle: number[][]; so
 }
 
 export default function SudokuGame({ level, config, onComplete, onFail, elapsedTime }: SudokuGameProps) {
+  const { setTimeout, isPaused } = useGameClock();
   const size = Number(config.params.size || 9);
   const prefill = Number(config.params.prefill || 40);
   const timeLimit = Number(config.params.timeLimit || 0);
@@ -145,7 +147,7 @@ export default function SudokuGame({ level, config, onComplete, onFail, elapsedT
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isComplete) return;
+      if (isComplete || isPaused()) return;
       const num = parseInt(e.key);
       if (num >= 1 && num <= size) {
         handleNumberInput(num);
@@ -157,9 +159,7 @@ export default function SudokuGame({ level, config, onComplete, onFail, elapsedT
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNumberInput, size, isComplete]);
 
-  const cellSize = size === 4 ? 'w-14 h-14 sm:w-16 sm:h-16 text-xl' :
-    size === 6 ? 'w-12 h-12 sm:w-14 sm:h-14 text-lg' :
-    'w-9 h-9 sm:w-11 sm:h-11 text-base';
+  const cellSize = 'sudoku-cell text-base';
 
   const getBorderClass = (row: number, col: number) => {
     const borders: string[] = [];
@@ -187,7 +187,7 @@ export default function SudokuGame({ level, config, onComplete, onFail, elapsedT
       </div>
 
       <div
-        className="grid gap-0 border-2 border-[var(--black-4)] rounded-lg overflow-hidden"
+        className="sudoku-board grid gap-0 border-2 border-[var(--black-4)] rounded-lg overflow-hidden"
         style={{ gridTemplateColumns: `repeat(${size}, 1fr)` }}
       >
         {userGrid.map((row, ri) =>

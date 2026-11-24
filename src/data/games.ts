@@ -393,6 +393,18 @@ export const skillNodes: SkillNode[] = [
 ];
 
 export const levelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> = {
+  'number-pyramid': [
+    { name: '数塔初识', params: { size: 3, timeLimit: 0 } },
+    { name: '三层练习', params: { size: 3, timeLimit: 300 } },
+    { name: '四层探索', params: { size: 4, timeLimit: 360 } },
+    { name: '四层进阶', params: { size: 4, timeLimit: 300 } },
+    { name: '五层挑战', params: { size: 5, timeLimit: 420 } },
+    { name: '五层进阶', params: { size: 5, timeLimit: 360 } },
+    { name: '六层探索', params: { size: 6, timeLimit: 480 } },
+    { name: '六层进阶', params: { size: 6, timeLimit: 420 } },
+    { name: '七层挑战', params: { size: 7, timeLimit: 540 } },
+    { name: '八层发现', params: { size: 8, timeLimit: 600 } },
+  ],
   sudoku: [
     { name: '初识数独', params: { size: 4, prefill: 8, timeLimit: 0 } },
     { name: '基础练习', params: { size: 6, prefill: 12, timeLimit: 600 } },

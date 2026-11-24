@@ -1,3 +1,4 @@
+import { useGameClock } from '@/hooks/use-game-clock';
 import { useState, useEffect } from 'react';
 
 interface Props {
@@ -22,6 +23,7 @@ interface Node {
 }
 
 export default function KonigsbergGame({ level, config, onComplete, onFail }: Props) {
+  const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { bridges = 7, nodes = 4, timeLimit = 0 } = config.params;
   const [edges, setEdges] = useState<Edge[]>([]);
   const [currentNode, setCurrentNode] = useState<number | null>(null);
@@ -125,7 +127,8 @@ export default function KonigsbergGame({ level, config, onComplete, onFail }: Pr
 
         {/* Nodes */}
         {nodeList.slice(0, nodes).map(node => (
-          <g key={node.id} onClick={() => handleNodeClick(node.id)} className="cursor-pointer">
+          <g key={node.id} role="button" tabIndex={0} aria-label={`前往${node.label}`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNodeClick(node.id); } }} onClick={() => handleNodeClick(node.id)} className="cursor-pointer">
+            <circle cx={node.x} cy={node.y} r={8} fill="transparent"/>
             <circle
               cx={node.x} cy={node.y}
               r={currentNode === node.id ? 8 : 6}
@@ -133,7 +136,7 @@ export default function KonigsbergGame({ level, config, onComplete, onFail }: Pr
               stroke={currentNode === node.id ? 'var(--accent-glow)' : 'var(--black-4)'}
               strokeWidth={2}
             />
-            <text x={node.x} y={node.y + 1} textAnchor="middle" fill="white" fontSize="6" fontFamily="monospace">
+            <text x={node.x} y={node.y + 1} textAnchor="middle" fill={currentNode === node.id ? 'var(--black-2)' : 'var(--white)'} fontSize="6" fontFamily="monospace">
               {node.label}
             </text>
           </g>
