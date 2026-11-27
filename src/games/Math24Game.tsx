@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface Props {
   level: number;
-  config: { params: Record<string, number> };
+  config: { params: Record<string, number | string | boolean> };
   onComplete: (score: number, stars: number) => void;
   onFail: (reason: string) => void;
 }
@@ -12,9 +12,9 @@ type Card = { id: number; value: number; expression: string };
 type Operator = '+' | '−' | '×' | '÷';
 const operators: Operator[] = ['+', '−', '×', '÷'];
 
-function canMake24(values: number[]): boolean {
+function canMakeTarget(values: number[], target: number): boolean {
   const solve = (nums: number[]): boolean => {
-    if (nums.length === 1) return Math.abs(nums[0] - 24) < 1e-7;
+    if (nums.length === 1) return Math.abs(nums[0] - target) < 1e-7;
     for (let i = 0; i < nums.length; i++) {
       for (let j = i + 1; j < nums.length; j++) {
         const a = nums[i], b = nums[j];
@@ -30,12 +30,12 @@ function canMake24(values: number[]): boolean {
   return solve(values);
 }
 
-function generateNumbers(maxNum: number): number[] {
+function generateNumbers(maxNum: number, target: number, cardCount: number): number[] {
   for (let attempt = 0; attempt < 200; attempt++) {
-    const values = Array.from({ length: 4 }, () => Math.floor(Math.random() * maxNum) + 1);
-    if (canMake24(values)) return values;
+    const values = Array.from({ length: cardCount }, () => Math.floor(Math.random() * maxNum) + 1);
+    if (canMakeTarget(values, target)) return values;
   }
-  return [3, 3, 8, 8];
+  return cardCount === 2 ? [1, target - 1] : [3, 3, 8, 8];
 }
 
 function calculate(a: number, op: Operator, b: number): number | null {
@@ -53,7 +53,12 @@ function format(value: number): string {
 
 export default function Math24Game({ level, config, onComplete, onFail }: Props) {
   const { setTimeout, setInterval, clearInterval } = useGameClock();
-  const { maxNum = 9, questions = 5, timeLimit = 0 } = config.params;
+  const maxNum = Number(config.params.maxNum ?? 9);
+  const questions = Number(config.params.questions ?? 5);
+  const timeLimit = Number(config.params.timeLimit ?? 0);
+  const target = Number(config.params.target ?? 24);
+  const cardCount = Number(config.params.cardCount ?? 4);
+  const cardSet = String(config.params.cards ?? '');
   const [cards, setCards] = useState<Card[]>([]);
   const [history, setHistory] = useState<Card[][]>([]);
   const [firstId, setFirstId] = useState<number | null>(null);
@@ -65,19 +70,24 @@ export default function Math24Game({ level, config, onComplete, onFail }: Props)
   const [gameOver, setGameOver] = useState(false);
   const [solved, setSolved] = useState(false);
   const nextId = useRef(0);
+  const questionIndexRef = useRef(0);
   const correctRef = useRef(0);
   const gameOverRef = useRef(false);
   const finishRef = useRef<(correct: number) => void>(() => {});
 
   const createQuestion = useCallback(() => {
-    const values = generateNumbers(maxNum);
+    const presets = typeof cardSet === 'string' ? cardSet.split('|').filter(Boolean) : [];
+    const preset = presets[questionIndexRef.current % Math.max(presets.length, 1)];
+    const values = preset
+      ? preset.split(',').map(value => Number(value.trim()))
+      : generateNumbers(maxNum, target, cardCount);
     setCards(values.map(value => ({ id: nextId.current++, value, expression: String(value) })));
     setHistory([]);
     setFirstId(null);
     setOperator(null);
     setSolved(false);
     setMessage('先选一个数字，再选运算符和另一个数字');
-  }, [maxNum]);
+  }, [maxNum, target, cardCount, cardSet]);
 
   const finishGame = useCallback((correct: number) => {
     if (gameOverRef.current) return;
@@ -97,6 +107,7 @@ export default function Math24Game({ level, config, onComplete, onFail }: Props)
   useEffect(() => {
     correctRef.current = 0;
     gameOverRef.current = false;
+    questionIndexRef.current = 0;
     setCurrentQ(0);
     setCorrectCount(0);
     setTimeLeft(timeLimit);
@@ -153,18 +164,19 @@ export default function Math24Game({ level, config, onComplete, onFail }: Props)
     setOperator(null);
 
     if (nextCards.length === 1) {
-      if (Math.abs(nextCards[0].value - 24) < 1e-7) {
+      if (Math.abs(nextCards[0].value - target) < 1e-7) {
         const newCorrect = correctRef.current + 1;
         correctRef.current = newCorrect;
         setCorrectCount(newCorrect);
         setSolved(true);
-        setMessage('答对了！你算出了 24');
+        setMessage(`答对了！你算出了 ${target}`);
         if (currentQ + 1 >= questions) {
           setGameOver(true);
           gameOverRef.current = true;
           const stars = newCorrect === questions ? 3 : newCorrect >= questions * 0.8 ? 2 : 1;
           setTimeout(() => onComplete(newCorrect * 200 + (timeLimit > 0 ? timeLeft * 10 : 0), stars), 700);
         } else {
+          questionIndexRef.current = currentQ + 1;
           setCurrentQ(previous => previous + 1);
           setTimeout(() => createQuestion(), 900);
         }
@@ -193,7 +205,7 @@ export default function Math24Game({ level, config, onComplete, onFail }: Props)
         {timeLimit > 0 && <div className="math24-clock"><span>剩余时间</span><strong>{timeLeft}<small> 秒</small></strong></div>}
       </div>
 
-      <div className="math24-heading"><span className="math24-spark">✳</span><div><h2>合成 24</h2><p>每一步都用两个数，算出一个新结果</p></div></div>
+      <div className="math24-heading"><span className="math24-spark">✳</span><div><h2>合成 {target}</h2><p>每一步都用两个数，算出一个新结果</p></div></div>
 
       <div className="math24-workbench">
         <div className="math24-step-label"><span>当前数字</span><span>{cards.length} 个待组合</span></div>
@@ -217,10 +229,10 @@ export default function Math24Game({ level, config, onComplete, onFail }: Props)
         </div>
 
         <div className={`math24-message${solved ? ' success' : ''}`} role="status">{message}</div>
-        <div className="math24-actions"><button className="math24-undo" onClick={undo} disabled={history.length === 0 || gameOver || solved}>↶ <span>撤销一步</span></button><span>目标 <strong>24</strong></span></div>
+      <div className="math24-actions"><button className="math24-undo" onClick={undo} disabled={history.length === 0 || gameOver || solved}>↶ <span>撤销一步</span></button><span>目标 <strong>{target}</strong></span></div>
       </div>
 
-      <p className="math24-help">点击数字 → 选择 + − × ÷ → 点击另一个数字</p>
+      <p className="math24-help">点击数字 → 选择 + − × ÷ → 点击另一个数字，算出 {target}</p>
       {history.length > 0 && <details className="math24-history"><summary>查看计算过程</summary><ol>{history.map((step, index) => <li key={index}>{step.filter(card => card.expression.includes('(')).slice(-1)[0]?.expression ?? '初始数字'}</li>)}</ol></details>}
     </section>
   );

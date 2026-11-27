@@ -432,8 +432,8 @@ export const skillNodes: SkillNode[] = [
 ];
 
 const baseLevelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> = {
-  bloxorz: bloxorzLevels.map(puzzle => ({ name: puzzle.name, params: { timeLimit: 0 } })),
-  lighthouse: lighthouseLevels.map((puzzle, i) => ({ name: puzzle.name, params: { size: i + 2, timeLimit: 0 } })),
+  bloxorz: bloxorzLevels.map((puzzle, i) => ({ name: puzzle.name, params: { puzzleIndex: i, timeLimit: 0 } })),
+  lighthouse: lighthouseLevels.map((puzzle, i) => ({ name: puzzle.name, params: { puzzleIndex: i, size: i + 2, timeLimit: 0 } })),
   'number-pyramid': [
     { name: '数塔初识', params: { size: 3, timeLimit: 0 } },
     { name: '三层练习', params: { size: 3, timeLimit: 300 } },
@@ -519,11 +519,11 @@ const baseLevelConfigs: Record<string, Array<{ name: string; params: Record<stri
     { name: '井字棋大师', params: { size: 3, win: 3, depth: 4 } },
   ],
   'gomoku': [
-    { name: '入门教学', params: { size: 15, win: 5, depth: 1 } },
+    { name: '入门教学', params: { size: 15, win: 5, depth: 0 } },
     { name: '初级对战', params: { size: 15, win: 5, depth: 1 } },
     { name: '中级挑战', params: { size: 15, win: 5, depth: 2 } },
-    { name: '禁手规则', params: { size: 15, win: 5, depth: 2 } },
-    { name: '高级对战', params: { size: 15, win: 5, depth: 3 } },
+    { name: '禁手规则', params: { size: 15, win: 5, depth: 3 } },
+    { name: '高级对战', params: { size: 15, win: 5, depth: 4 } },
     { name: '限时挑战', params: { size: 15, win: 5, depth: 3, moveTime: 30 } },
     { name: '专家级', params: { size: 15, win: 5, depth: 3, moveTime: 20 } },
     { name: '大师级', params: { size: 15, win: 5, depth: 4, moveTime: 15 } },
@@ -679,8 +679,9 @@ const baseLevelConfigs: Record<string, Array<{ name: string; params: Record<stri
 
 export const chapterNames = ['幼儿园', '小学生', '中学生', '高中生', '大学生', '研究生', '博士生', '博士后', '副教授', '教授', '数学家', '天才', '数学之王'];
 
-// Each rank is a chapter with five stages. Existing puzzle families provide the
-// first ten difficulty templates; later ranks build on the hardest template.
+// All five levels in a chapter intentionally share one difficulty band.
+// Chapters use progressively stronger templates; the final ranks extend the
+// last scalable template instead of silently repeating it.
 export const levelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> =
   Object.fromEntries(Object.entries(baseLevelConfigs).map(([gameId, templates]) => [gameId,
     Array.from({ length: chapterNames.length * 5 }, (_, index) => {
@@ -689,14 +690,44 @@ export const levelConfigs: Record<string, Array<{ name: string; params: Record<s
       const templateIndex = Math.min(templates.length - 1, chapter);
       const template = templates[templateIndex];
       const params = { ...template.params };
-      // Extend scalable count/size challenges beyond the original ten templates.
-      // Small steps keep generated boards playable while increasing the ceiling.
       const extraRanks = Math.max(0, chapter - (templates.length - 1));
       if (extraRanks) {
-        for (const key of ['size', 'disks', 'piles', 'mines', 'bridges', 'nodes', 'clues', 'attrs', 'maxStones', 'total', 'max', 'maxNum', 'shuffle']) {
-          if (typeof params[key] === 'number') params[key] = params[key] + extraRanks + Math.floor(stage / 2);
+        for (const key of ['size', 'disks', 'piles', 'mines', 'bridges', 'nodes', 'maxStones', 'total', 'max', 'maxNum', 'shuffle', 'depth', 'level', 'puzzleIndex', 'target']) {
+          if (typeof params[key] === 'number') params[key] += extraRanks;
         }
+        if (typeof params.prefill === 'number') params.prefill = Math.max(4, params.prefill - extraRanks * 2);
+        if (typeof params.timeLimit === 'number' && params.timeLimit > 0) params.timeLimit = Math.max(30, params.timeLimit - extraRanks * 60);
       }
+      void stage;
       return { name: `${chapterNames[chapter]} · ${stage + 1}`, params };
     }),
   ]));
+
+// The preschool on-ramp uses small addition facts. Later tiers use curated,
+// solvable hands from the public 24-point solution archive. Its exact solver
+// classifies fraction-required hands such as 3,3,8,8 as expert difficulty.
+// References: corestandards.org/wp-content/uploads/2023/09/Math_Standards1.pdf
+// (Kindergarten addition/subtraction within 10); education.ky.gov/.../Game_of_24_English.pdf
+// (24 game recommended for grades 4–5); 24pointgame.com/dataset (exact hand tiers).
+const math24RankParams: Array<Record<string, number | string | boolean>> = [
+  { target: 3, cardCount: 2, maxNum: 2, cards: '1,2', questions: 1, timeLimit: 0 },
+  { target: 24, cardCount: 3, maxNum: 12, cards: '2,3,4|1,4,6|1,3,8|2,2,6|1,2,12', questions: 5, timeLimit: 0 },
+  { target: 24, cardCount: 4, maxNum: 9, cards: '1,2,3,4|1,2,4,6|2,3,4,6|2,2,4,6|3,3,4,6', questions: 5, timeLimit: 0 },
+  { target: 24, cardCount: 4, maxNum: 9, cards: '5,6,7,8|3,5,5,7|3,4,7,8|4,5,5,7|5,6,7,9', questions: 5, timeLimit: 300 },
+  { target: 24, cardCount: 4, maxNum: 9, cards: '1,1,6,9|1,2,7,7|2,4,5,5|2,4,7,7|2,5,7,8', questions: 5, timeLimit: 300 },
+  { target: 24, cardCount: 4, maxNum: 13, cards: '2,4,11,12|1,5,8,13|1,6,11,13|2,3,8,13|3,5,7,13', questions: 5, timeLimit: 240 },
+  { target: 24, cardCount: 4, maxNum: 13, cards: '1,1,4,10|1,1,6,12|1,1,7,10|1,2,9,11|1,3,9,10', questions: 5, timeLimit: 240 },
+  { target: 24, cardCount: 4, maxNum: 13, cards: '1,4,6,10|1,4,7,11|1,5,11,11|1,6,11,13|1,7,13,13', questions: 5, timeLimit: 210 },
+  { target: 24, cardCount: 4, maxNum: 13, cards: '2,3,8,13|2,4,7,12|2,4,11,12|3,5,7,13|5,7,10,11', questions: 5, timeLimit: 180 },
+  { target: 24, cardCount: 4, maxNum: 13, cards: '6,8,10,11|1,2,7,12|1,2,8,10|1,3,8,10|1,5,5,12', questions: 5, timeLimit: 150 },
+  { target: 24, cardCount: 4, maxNum: 13, cards: '3,3,8,8|4,4,7,7|1,5,5,5|3,3,8,8|4,4,7,7', questions: 5, timeLimit: 120 },
+  { target: 24, cardCount: 4, maxNum: 13, cards: '1,5,5,5|3,3,8,8|4,4,7,7|1,5,5,5|3,3,8,8', questions: 5, timeLimit: 90 },
+  { target: 24, cardCount: 4, maxNum: 13, cards: '3,3,8,8|1,5,5,5|4,4,7,7|3,3,8,8|1,5,5,5', questions: 5, timeLimit: 60 },
+];
+
+for (let chapter = 0; chapter < math24RankParams.length; chapter++) {
+  const params = math24RankParams[chapter];
+  for (let stage = 0; stage < 5; stage++) {
+    levelConfigs.math24[chapter * 5 + stage] = { name: `${chapterNames[chapter]} · ${stage + 1}`, params: { ...params } };
+  }
+}

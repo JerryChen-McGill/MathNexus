@@ -6,9 +6,10 @@ import type { LighthouseMark } from '@/lib/lighthouse';
 import { useGameClock } from '@/hooks/use-game-clock';
 import './LighthouseGame.css';
 
-interface Props { level: number; elapsedTime: number; onComplete: (score: number, stars: number) => void }
-export default function LighthouseGame({ level, elapsedTime, onComplete }: Props) {
-  const puzzle = lighthouseLevels[(level - 1) % lighthouseLevels.length];
+interface Props { level: number; config: { params: Record<string, number | string | boolean> }; elapsedTime: number; onComplete: (score: number, stars: number) => void }
+export default function LighthouseGame({ level, config, elapsedTime, onComplete }: Props) {
+  const puzzleIndex = Number(config.params.puzzleIndex ?? level - 1);
+  const puzzle = lighthouseLevels[Math.min(Math.max(0, puzzleIndex), lighthouseLevels.length - 1)];
   const size = puzzle.rows.length;
   const [history, setHistory] = useState<LighthouseMark[][]>(() => [Array(size * size).fill(null)]);
   const [cursor, setCursor] = useState(0);

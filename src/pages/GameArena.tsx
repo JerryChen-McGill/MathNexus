@@ -32,6 +32,15 @@ import LighthouseGame from '@/games/LighthouseGame';
 import BloxorzGame from '@/games/BloxorzGame';
 import PuzzlePackGame from '@/games/PuzzlePackGame';
 import { canPlayLevel } from '@/lib/access';
+import type { CSSProperties } from 'react';
+
+const confettiPieces = Array.from({ length: 52 }, (_, i) => ({
+  left: `${(i * 37) % 100}%`,
+  delay: `${(i % 13) * 35}ms`,
+  duration: `${1300 + (i % 7) * 110}ms`,
+  drift: `${((i * 29) % 180) - 90}px`,
+  color: ['#ff5f7e', '#ffb703', '#22c55e', '#38bdf8', '#a78bfa', '#fb7185'][i % 6],
+}));
 const gameComponents: Record<string, React.FC<any>> = {
 'bloxorz': BloxorzGame,
 'lighthouse': LighthouseGame,
@@ -111,7 +120,8 @@ function GameSession({ gameId, level, onRestart }: { gameId: string; level: numb
       if (!live.current) return;
       const xp = useGameStore.getState().completeLevel(session, gameId, level, score, elapsedRef.current, stars);
       setResult({ won: true, score, stars, xp });
-      clock.setTimeout(() => { if (live.current) setShowResult(true); }, 1400);
+      // The game clock is paused on settlement, so its timers cannot reveal the result dialog.
+      globalThis.setTimeout(() => { if (live.current) setShowResult(true); }, 500);
     });
   }, [clock, session, gameId, level]);
   const onFail = useCallback((reason: string) => {
@@ -121,7 +131,7 @@ function GameSession({ gameId, level, onRestart }: { gameId: string; level: numb
       if (!live.current) return;
       useGameStore.getState().failLevel(session, gameId, level);
       setResult({ won: false, score: 0, stars: 0, xp: 0, reason });
-      clock.setTimeout(() => { if (live.current) setShowResult(true); }, 1400);
+      globalThis.setTimeout(() => { if (live.current) setShowResult(true); }, 500);
     });
   }, [clock, session, gameId, level]);
   const frozen = panel !== null || result !== null;
@@ -137,6 +147,7 @@ function GameSession({ gameId, level, onRestart }: { gameId: string; level: numb
     </Dialog>
     <Dialog open={result !== null && showResult}>
       <DialogContent className="session-dialog result-dialog" showCloseButton={false} onEscapeKeyDown={e => e.preventDefault()} onPointerDownOutside={e => e.preventDefault()}>
+        {result?.won && showResult && <div className="celebration-confetti" aria-hidden="true">{confettiPieces.map((piece, i) => <span key={i} style={{ left: piece.left, animationDelay: piece.delay, animationDuration: piece.duration, backgroundColor: piece.color, '--confetti-drift': piece.drift } as CSSProperties}/>)}</div>}
         {result?.won && <div className="celebration-sparkles" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span><span>✦</span><span>★</span><span>✧</span></div>}
         <span className={`result-symbol ${result?.won ? 'celebrate' : 'retry'}`}>{result?.won ? <Trophy size={42}/> : <RotateCcw size={42}/>}</span>
         <DialogTitle>{result?.won ? '又一个小小胜利！' : '换个思路，再试一次'}</DialogTitle>

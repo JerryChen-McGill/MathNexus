@@ -28,9 +28,10 @@ function Cuboid({ col, row, width = 1, depth = 1, height, kind }: { col: number;
   </g>;
 }
 
-interface Props { level: number; elapsedTime: number; onComplete: (score: number, stars: number) => void; onFail: (reason: string) => void }
-export default function BloxorzGame({ level, elapsedTime, onComplete, onFail }: Props) {
-  const puzzle = bloxorzLevels[(level - 1) % bloxorzLevels.length];
+interface Props { level: number; config: { params: Record<string, number | string | boolean> }; elapsedTime: number; onComplete: (score: number, stars: number) => void; onFail: (reason: string) => void }
+export default function BloxorzGame({ level, config, elapsedTime, onComplete, onFail }: Props) {
+  const puzzleIndex = Number(config.params.puzzleIndex ?? level - 1);
+  const puzzle = bloxorzLevels[Math.min(Math.max(0, puzzleIndex), bloxorzLevels.length - 1)];
   const start: BlockPose = { row: puzzle.start[0], col: puzzle.start[1], orientation: 'standing' };
   const [history, setHistory] = useState<BlockPose[]>([start]);
   const historyRef = useRef(history);

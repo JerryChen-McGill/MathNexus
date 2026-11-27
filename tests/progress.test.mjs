@@ -63,8 +63,8 @@ test('store ignores duplicate and stale session settlements across programs', as
   globalThis.localStorage = { getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, v), removeItem: k => memory.delete(k) };
   globalThis.window = { localStorage: globalThis.localStorage };
   const { useGameStore: store, levelCounts } = await import('../node_modules/.cache/mathnexus/store.mjs');
-  assert.equal(Object.keys(levelCounts).length, 22);
-  assert.ok(Object.values(levelCounts).every(count => count === 10));
+  assert.equal(Object.keys(levelCounts).length, 42);
+  assert.ok(Object.values(levelCounts).every(count => count === 65));
   store.getState().resetProgress();
   store.getState().startGame('a', 'sudoku'); store.getState().startGame('a', 'sudoku');
   assert.equal(store.getState().stats.totalGamesPlayed, 1);
@@ -128,7 +128,7 @@ test('store ignores duplicate and stale session settlements across programs', as
     store.getState().startGame('locked', 'lighthouse');
     assert.equal(store.getState().completeLevel('locked', 'lighthouse', 9, 100, 30, 3), 0);
     store.getState().setUserToken(token);
-    for (const badLevel of [0, 11, 1.5, NaN]) {
+    for (const badLevel of [0, 66, 1.5, NaN]) {
       assert.equal(store.getState().completeLevel('locked', 'lighthouse', badLevel, 100, 30, 3), 0);
     }
     store.getState().setUserToken('');
