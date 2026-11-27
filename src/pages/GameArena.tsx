@@ -137,10 +137,11 @@ function GameSession({ gameId, level, onRestart }: { gameId: string; level: numb
     </Dialog>
     <Dialog open={result !== null && showResult}>
       <DialogContent className="session-dialog result-dialog" showCloseButton={false} onEscapeKeyDown={e => e.preventDefault()} onPointerDownOutside={e => e.preventDefault()}>
-        <span className={`result-symbol ${result?.won ? '' : 'retry'}`}>{result?.won ? <Trophy size={42}/> : <RotateCcw size={42}/>}</span>
+        {result?.won && <div className="celebration-sparkles" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span><span>✦</span><span>★</span><span>✧</span></div>}
+        <span className={`result-symbol ${result?.won ? 'celebrate' : 'retry'}`}>{result?.won ? <Trophy size={42}/> : <RotateCcw size={42}/>}</span>
         <DialogTitle>{result?.won ? '又一个小小胜利！' : '换个思路，再试一次'}</DialogTitle>
         <DialogDescription>{result?.won ? config.name : result?.reason}</DialogDescription>
-        {result?.won && <><div className="earned-xp"><Sparkles/>+{result.xp} XP</div><p className="muted">今日完成 {Math.min(3, rewards.daily[localDate()]?.completed ?? 0)} / 3 局{rewards.daily[localDate()]?.bonusAwarded ? ' · 今日奖励已获得' : ''}</p><details><summary>本局记录</summary><p>{result.score} 分 · {'★'.repeat(result.stars)} · {elapsed} 秒</p></details></>}
+        {result?.won && <><div className="earned-xp"><Sparkles/>+{result.xp} XP</div><p className="result-stars" aria-label={`${result.stars} 颗星`}>{Array.from({ length: 3 }, (_, i) => <span key={i} className={i < result.stars ? 'star-earned' : ''}>★</span>)}</p><p className="result-score">{result.score} 分 · 用时 {elapsed} 秒</p><p className="muted">今日完成 {Math.min(3, rewards.daily[localDate()]?.completed ?? 0)} / 3 局{rewards.daily[localDate()]?.bonusAwarded ? ' · 今日奖励已获得' : ''}</p><p className="muted">记录已保存，可在关卡路径的「我的关卡记录」中查看。</p></>}
         {result?.won && level < levelConfigs[gameId].length ? <button className="primary-button" onClick={() => navigate(`/program/${gameId}/play/${level + 1}`)}>下一关</button> : result?.won ? <Link className="primary-button" to={back}>完成旅程，回到路线</Link> : <button className="primary-button" onClick={onRestart}>再试一次</button>}
         <Link className="text-button" to={back}>回到关卡路径</Link>
       </DialogContent>

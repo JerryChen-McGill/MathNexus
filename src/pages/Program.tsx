@@ -63,7 +63,7 @@ function ProgramPath({ gameId }: { gameId: string }) {
         <div className="little-star" aria-hidden="true">✦</div><h2>按你的节奏来</h2><p>一关也很好。遇到难题，休息一下，再试一次。</p>
         <details><summary><BookOpen size={18}/>怎么玩</summary><p>{quickRules[gameId]}</p></details>
         <details><summary><Sparkles size={18}/>我的关卡记录</summary>
-          {levels.map((l, i) => { const result = progress.levels[`level-${i + 1}`]; return result?.completed ? <p className="record-row" key={l.name}><span>{l.name}</span><strong>{'★'.repeat(result.stars)} · {result.bestScore} 分</strong></p> : null; })}
+          {levels.map((l, i) => { const result = progress.levels[`level-${i + 1}`]; return result?.completed ? <p className="record-row" key={l.name}><span>{i + 1}. {l.name}</span><strong>{'★'.repeat(result.stars)} · {result.bestScore} 分 · {result.bestTime} 秒</strong></p> : null; })}
           {!Object.values(progress.levels).some(l => l.completed) && <p>完成第一关，你的记录就会出现在这里。</p>}
         </details>
       </aside>
