@@ -66,6 +66,11 @@ export const useGameStore = create<State>()(persist((set, get) => ({
     recentProgram: 'sudoku', stats: defaultStats(), seenHints: [], activeSession: null, settledSession: null }),
 }), {
   name: 'mathnexus-save', version: 5,
+  // Same-version saves also need entries for games added after they were written.
+  merge: (persisted, current) => {
+    const saved = (persisted ?? {}) as Partial<State>;
+    return { ...current, ...saved, gameProgress: normalizeProgress(saved.gameProgress ?? {}, levelCounts) };
+  },
   partialize: state => ({ playerName: state.playerName, userToken: state.userToken, totalScore: state.totalScore, gameProgress: state.gameProgress,
     rewards: state.rewards, recentProgram: state.recentProgram, settings: state.settings, stats: state.stats, seenHints: state.seenHints }),
   migrate: persisted => {

@@ -29,8 +29,11 @@ import SunziGame from '@/games/SunziGame';
 import KonigsbergGame from '@/games/KonigsbergGame';
 import NumberPyramidGame from '@/games/NumberPyramidGame';
 import LighthouseGame from '@/games/LighthouseGame';
+import BloxorzGame from '@/games/BloxorzGame';
+import PuzzlePackGame from '@/games/PuzzlePackGame';
 import { canPlayLevel } from '@/lib/access';
 const gameComponents: Record<string, React.FC<any>> = {
+'bloxorz': BloxorzGame,
 'lighthouse': LighthouseGame,
 'sudoku': SudokuGame,
 'math24': Math24Game,
@@ -52,6 +55,7 @@ const gameComponents: Record<string, React.FC<any>> = {
 'sunzi': SunziGame,
 'konigsberg': KonigsbergGame,
 'number-pyramid': NumberPyramidGame,
+...Object.fromEntries(['water-pipes','shikaku','skyscraper','nonogram','killer-sudoku','kakuro','hashi','parking-lot','water-sort','sliding-maze','queens','water-jug','one-stroke','paradox-garden','escape-room','tango','lucky-draw','pinecone-battle','logic-fill','puzzle-challenge'].map(id => [id, PuzzlePackGame])),
 };
 export default function GameArena() {
   const { gameId = '', level: rawLevel = '' } = useParams();
@@ -74,6 +78,7 @@ function GameSession({ gameId, level, onRestart }: { gameId: string; level: numb
   const settled = useRef(false);
   const live = useRef(true);
   const [panel, setPanel] = useState<'pause' | 'rules' | null>(null);
+  const [showResult, setShowResult] = useState(false);
   const [result, setResult] = useState<{ won: boolean; score: number; stars: number; xp: number; reason?: string } | null>(null);
   const [showHint, setShowHint] = useState(() => !useGameStore.getState().seenHints.includes(gameId));
   const dismissHint = useGameStore(s => s.dismissHint);
@@ -106,6 +111,7 @@ function GameSession({ gameId, level, onRestart }: { gameId: string; level: numb
       if (!live.current) return;
       const xp = useGameStore.getState().completeLevel(session, gameId, level, score, elapsedRef.current, stars);
       setResult({ won: true, score, stars, xp });
+      clock.setTimeout(() => { if (live.current) setShowResult(true); }, 1400);
     });
   }, [clock, session, gameId, level]);
   const onFail = useCallback((reason: string) => {
@@ -115,6 +121,7 @@ function GameSession({ gameId, level, onRestart }: { gameId: string; level: numb
       if (!live.current) return;
       useGameStore.getState().failLevel(session, gameId, level);
       setResult({ won: false, score: 0, stars: 0, xp: 0, reason });
+      clock.setTimeout(() => { if (live.current) setShowResult(true); }, 1400);
     });
   }, [clock, session, gameId, level]);
   const frozen = panel !== null || result !== null;
@@ -123,12 +130,12 @@ function GameSession({ gameId, level, onRestart }: { gameId: string; level: numb
     <div className="session-progress" aria-hidden="true"><span style={{ width: `${level / levelConfigs[gameId].length * 100}%` }}/></div>
     {showHint && <div className="first-hint"><BookOpen size={20}/><p>{quickRules[gameId]}</p><button className="icon-button" onClick={() => setShowHint(false)} aria-label="关闭玩法提示"><X size={18}/></button></div>}
     <main className={`game-content game-${gameId}`} inert={frozen} aria-hidden={frozen || undefined}>
-      <GameClockContext.Provider value={clock}><GameComponent level={level} config={config} onComplete={onComplete} onFail={onFail} elapsedTime={elapsed}/></GameClockContext.Provider>
+      <GameClockContext.Provider value={clock}><GameComponent gameId={gameId} level={level} config={config} onComplete={onComplete} onFail={onFail} elapsedTime={elapsed}/></GameClockContext.Provider>
     </main>
     <Dialog open={panel !== null && result === null} onOpenChange={open => { if (!open) changePanel(null); }}>
       <DialogContent className="session-dialog"><DialogTitle>{panel === 'rules' ? '怎么玩' : '休息一下，也很好'}</DialogTitle><DialogDescription>{panel === 'rules' ? quickRules[gameId] : '棋盘和时间都在等你，准备好了就继续。'}</DialogDescription><button className="primary-button" onClick={() => changePanel(null)}>继续游戏</button><button className="secondary-button" onClick={onRestart}><RotateCcw size={18}/>重新开始</button><Link className="text-button" to={back}>回到关卡路径</Link></DialogContent>
     </Dialog>
-    <Dialog open={result !== null}>
+    <Dialog open={result !== null && showResult}>
       <DialogContent className="session-dialog result-dialog" showCloseButton={false} onEscapeKeyDown={e => e.preventDefault()} onPointerDownOutside={e => e.preventDefault()}>
         <span className={`result-symbol ${result?.won ? '' : 'retry'}`}>{result?.won ? <Trophy size={42}/> : <RotateCcw size={42}/>}</span>
         <DialogTitle>{result?.won ? '又一个小小胜利！' : '换个思路，再试一次'}</DialogTitle>

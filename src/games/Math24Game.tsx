@@ -1,5 +1,5 @@
 import { useGameClock } from '@/hooks/use-game-clock';
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface Props {
   level: number;
@@ -8,226 +8,220 @@ interface Props {
   onFail: (reason: string) => void;
 }
 
-function generate24Numbers(maxNum: number): number[] {
-  let nums: number[];
-  let attempts = 0;
-  do {
-    nums = Array.from({ length: 4 }, () => Math.floor(Math.random() * maxNum) + 1);
-    attempts++;
-  } while (!canMake24(nums) && attempts < 100);
-  if (attempts >= 100) return [3, 3, 8, 8]; // classic solvable
-  return nums;
-}
+type Card = { id: number; value: number; expression: string };
+type Operator = '+' | '−' | '×' | '÷';
+const operators: Operator[] = ['+', '−', '×', '÷'];
 
-function canMake24(nums: number[]): boolean {
-  const ops = ['+', '-', '*', '/'];
-  const perms = permutations(nums);
-  for (const p of perms) {
-    for (const op1 of ops) {
-      for (const op2 of ops) {
-        for (const op3 of ops) {
-          // Different parenthesizations
-          const patterns = [
-            `(${p[0]}${op1}${p[1]})${op2}(${p[2]}${op3}${p[3]})`,
-            `((${p[0]}${op1}${p[1]})${op2}${p[2]})${op3}${p[3]}`,
-            `${p[0]}${op1}((${p[1]}${op2}${p[2]})${op3}${p[3]})`,
-            `${p[0]}${op1}(${p[1]}${op2}(${p[2]}${op3}${p[3]}))`,
-          ];
-          for (const expr of patterns) {
-            try {
-              // eslint-disable-next-line no-eval
-              const result = eval(expr);
-              if (Math.abs(result - 24) < 0.0001) return true;
-            } catch { /* ignore */ }
-          }
-        }
+function canMake24(values: number[]): boolean {
+  const solve = (nums: number[]): boolean => {
+    if (nums.length === 1) return Math.abs(nums[0] - 24) < 1e-7;
+    for (let i = 0; i < nums.length; i++) {
+      for (let j = i + 1; j < nums.length; j++) {
+        const a = nums[i], b = nums[j];
+        const rest = nums.filter((_, k) => k !== i && k !== j);
+        const candidates = [a + b, a - b, b - a, a * b];
+        if (Math.abs(b) > 1e-9) candidates.push(a / b);
+        if (Math.abs(a) > 1e-9) candidates.push(b / a);
+        if (candidates.some(value => solve([...rest, value]))) return true;
       }
     }
-  }
-  return false;
+    return false;
+  };
+  return solve(values);
 }
 
-function permutations(arr: number[]): number[][] {
-  if (arr.length <= 1) return [arr];
-  const result: number[][] = [];
-  for (let i = 0; i < arr.length; i++) {
-    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
-    for (const perm of permutations(rest)) {
-      result.push([arr[i], ...perm]);
-    }
+function generateNumbers(maxNum: number): number[] {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const values = Array.from({ length: 4 }, () => Math.floor(Math.random() * maxNum) + 1);
+    if (canMake24(values)) return values;
   }
-  return result;
+  return [3, 3, 8, 8];
+}
+
+function calculate(a: number, op: Operator, b: number): number | null {
+  if (op === '+') return a + b;
+  if (op === '−') return a - b;
+  if (op === '×') return a * b;
+  if (Math.abs(b) < 1e-9) return null;
+  return a / b;
+}
+
+function format(value: number): string {
+  if (Number.isInteger(value)) return String(value);
+  return String(Number(value.toFixed(4)));
 }
 
 export default function Math24Game({ level, config, onComplete, onFail }: Props) {
   const { setTimeout, setInterval, clearInterval } = useGameClock();
   const { maxNum = 9, questions = 5, timeLimit = 0 } = config.params;
-  const [numbers, setNumbers] = useState<number[]>([]);
-  const [expression, setExpression] = useState('');
-  const [usedIndices, setUsedIndices] = useState<Set<number>>(new Set());
+  const [cards, setCards] = useState<Card[]>([]);
+  const [history, setHistory] = useState<Card[][]>([]);
+  const [firstId, setFirstId] = useState<number | null>(null);
+  const [operator, setOperator] = useState<Operator | null>(null);
   const [currentQ, setCurrentQ] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('先选一个数字，再选运算符和另一个数字');
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [gameOver, setGameOver] = useState(false);
+  const [solved, setSolved] = useState(false);
+  const nextId = useRef(0);
+  const correctRef = useRef(0);
+  const gameOverRef = useRef(false);
+  const finishRef = useRef<(correct: number) => void>(() => {});
+
+  const createQuestion = useCallback(() => {
+    const values = generateNumbers(maxNum);
+    setCards(values.map(value => ({ id: nextId.current++, value, expression: String(value) })));
+    setHistory([]);
+    setFirstId(null);
+    setOperator(null);
+    setSolved(false);
+    setMessage('先选一个数字，再选运算符和另一个数字');
+  }, [maxNum]);
+
+  const finishGame = useCallback((correct: number) => {
+    if (gameOverRef.current) return;
+    gameOverRef.current = true;
+    setGameOver(true);
+    const required = level <= 2 ? 1 : level <= 4 ? Math.ceil(questions * 0.6) : questions;
+    if (correct >= required) {
+      const stars = correct === questions ? 3 : correct >= questions * 0.8 ? 2 : 1;
+      onComplete(correct * 200 + (timeLimit > 0 ? timeLeft * 10 : 0), stars);
+    } else {
+      onFail(`只完成了 ${correct}/${questions} 题`);
+    }
+  }, [level, onComplete, onFail, questions, timeLeft, timeLimit]);
+
+  finishRef.current = finishGame;
 
   useEffect(() => {
-    startNewQuestion();
-    setTimeLeft(timeLimit);
+    correctRef.current = 0;
+    gameOverRef.current = false;
     setCurrentQ(0);
     setCorrectCount(0);
+    setTimeLeft(timeLimit);
     setGameOver(false);
-  }, [level]);
+    createQuestion();
+  }, [level, timeLimit, createQuestion]);
 
   useEffect(() => {
     if (timeLimit <= 0 || gameOver) return;
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
+      setTimeLeft(previous => {
+        if (previous <= 1) {
           clearInterval(timer);
-          endGame(correctCount);
+          finishRef.current(correctRef.current);
           return 0;
         }
-        return prev - 1;
+        return previous - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [timeLimit, gameOver, correctCount]);
+  }, [timeLimit, gameOver, setInterval, clearInterval]);
 
-  const startNewQuestion = () => {
-    const nums = generate24Numbers(maxNum);
-    setNumbers(nums);
-    setExpression('');
-    setUsedIndices(new Set());
-    setMessage('');
-  };
-
-  const endGame = (correct: number) => {
-    setGameOver(true);
-    const requiredCorrect = level <= 2 ? 1 : level <= 4 ? Math.ceil(questions * 0.6) : questions;
-    if (correct >= requiredCorrect) {
-      const baseScore = correct * 200;
-      const timeBonus = timeLimit > 0 ? timeLeft * 10 : 0;
-      const stars = correct === questions ? 3 : correct >= questions * 0.8 ? 2 : 1;
-      onComplete(baseScore + timeBonus, stars);
-    } else {
-      onFail(`只完成了 ${correct}/${questions} 题`);
+  const pickCard = (id: number) => {
+    if (gameOver || solved) return;
+    if (firstId === null) {
+      setFirstId(id);
+      setOperator(null);
+      setMessage('现在选一个运算符');
+      return;
     }
-  };
+    if (!operator) {
+      setFirstId(id === firstId ? null : id);
+      setMessage(id === firstId ? '已取消选择，请先选一个数字' : '现在选一个运算符');
+      return;
+    }
+    if (id === firstId) return;
 
-  const handleNumberClick = (num: number, index: number) => {
-    if (usedIndices.has(index) || gameOver) return;
-    setExpression(prev => prev + num);
-    setUsedIndices(prev => new Set(prev).add(index));
-  };
+    const first = cards.find(card => card.id === firstId);
+    const second = cards.find(card => card.id === id);
+    if (!first || !second) return;
+    const value = calculate(first.value, operator, second.value);
+    if (value === null || !Number.isFinite(value)) {
+      setMessage('不能除以 0，请换个运算');
+      setOperator(null);
+      return;
+    }
+    const expression = `(${first.expression} ${operator} ${second.expression})`;
+    const merged: Card = { id: nextId.current++, value: Math.abs(value) < 1e-9 ? 0 : value, expression };
+    const nextCards = cards.filter(card => card.id !== first.id && card.id !== second.id);
+    nextCards.splice(Math.min(cards.findIndex(card => card.id === first.id), cards.findIndex(card => card.id === second.id)), 0, merged);
+    setHistory(previous => [...previous, cards]);
+    setCards(nextCards);
+    setFirstId(null);
+    setOperator(null);
 
-  const handleOpClick = (op: string) => {
-    if (gameOver) return;
-    setExpression(prev => prev + ' ' + op + ' ');
-  };
-
-  const handleSubmit = () => {
-    if (gameOver) return;
-    try {
-      // eslint-disable-next-line no-eval
-      const result = eval(expression.replace(/×/g, '*').replace(/÷/g, '/'));
-      if (Math.abs(result - 24) < 0.001 && usedIndices.size === 4) {
-        setMessage('正确!');
-        const newCorrect = correctCount + 1;
+    if (nextCards.length === 1) {
+      if (Math.abs(nextCards[0].value - 24) < 1e-7) {
+        const newCorrect = correctRef.current + 1;
+        correctRef.current = newCorrect;
         setCorrectCount(newCorrect);
+        setSolved(true);
+        setMessage('答对了！你算出了 24');
         if (currentQ + 1 >= questions) {
-          endGame(newCorrect);
+          setGameOver(true);
+          gameOverRef.current = true;
+          const stars = newCorrect === questions ? 3 : newCorrect >= questions * 0.8 ? 2 : 1;
+          setTimeout(() => onComplete(newCorrect * 200 + (timeLimit > 0 ? timeLeft * 10 : 0), stars), 700);
         } else {
-          setCurrentQ(prev => prev + 1);
-          setTimeout(startNewQuestion, 500);
+          setCurrentQ(previous => previous + 1);
+          setTimeout(() => createQuestion(), 900);
         }
       } else {
-        setMessage(result !== 24 ? `=${result}, 需要24` : '必须使用所有4个数字');
+        setMessage(`结果是 ${format(nextCards[0].value)}，不是 24。可以撤销上一步再试。`);
       }
-    } catch {
-      setMessage('算式有误');
+    } else {
+      setMessage(`${format(value)} 已合并出来，继续组合剩下的数字`);
     }
   };
 
-  const handleClear = () => {
-    setExpression('');
-    setUsedIndices(new Set());
-    setMessage('');
+  const undo = () => {
+    if (gameOver || solved || history.length === 0) return;
+    setCards(history[history.length - 1]);
+    setHistory(previous => previous.slice(0, -1));
+    setFirstId(null);
+    setOperator(null);
+    setMessage('已撤销上一步，继续尝试');
   };
 
-  if (gameOver) return null;
-
   return (
-    <div className="flex flex-col items-center h-full max-w-lg mx-auto">
-      {/* Progress */}
-      <div className="w-full flex items-center justify-between mb-4">
-        <span className="text-sm text-[var(--black-6)]">题 {currentQ + 1}/{questions}</span>
-        <span className="text-sm text-[var(--black-6)]">正确 {correctCount}</span>
-        {timeLimit > 0 && (
-          <span className="font-mono-data text-sm text-[var(--accent)]">{timeLeft}s</span>
-        )}
+    <section className="math24-game" aria-label="二十四点">
+      <div className="math24-topline">
+        <div><span>本轮题目</span><strong>{currentQ + 1}<small> / {questions}</small></strong></div>
+        <div><span>已答对</span><strong>{correctCount}</strong></div>
+        {timeLimit > 0 && <div className="math24-clock"><span>剩余时间</span><strong>{timeLeft}<small> 秒</small></strong></div>}
       </div>
 
-      {/* Number Cards */}
-      <div className="flex gap-4 mb-8">
-        {numbers.map((num, i) => (
-          <button
-            key={i}
-            onClick={() => handleNumberClick(num, i)}
-            disabled={usedIndices.has(i)}
-            className={`w-16 h-20 sm:w-20 sm:h-24 rounded-xl border-2 flex items-center justify-center font-mono-data text-2xl sm:text-3xl font-bold transition-all duration-200 ${
-              usedIndices.has(i)
-                ? 'border-[var(--black-4)] bg-[var(--black-3)] text-[var(--black-5)] opacity-40'
-                : 'border-[var(--accent)] bg-[var(--black-2)] text-[var(--accent)] hover:bg-[var(--accent)]/10 hover:scale-105'
-            }`}
-          >
-            {num}
-          </button>
-        ))}
-      </div>
+      <div className="math24-heading"><span className="math24-spark">✳</span><div><h2>合成 24</h2><p>每一步都用两个数，算出一个新结果</p></div></div>
 
-      {/* Expression */}
-      <div className="w-full p-4 rounded-xl bg-[var(--black-2)] border border-[var(--black-3)] mb-6 min-h-[60px] flex items-center justify-center">
-        <span className="font-mono-data text-xl text-white">
-          {expression || '点击数字和运算符'}
-        </span>
-      </div>
-
-      {/* Operators */}
-      <div className="flex gap-3 mb-6">
-        {['+', '-', '*', '/'].map(op => (
-          <button
-            key={op}
-            onClick={() => handleOpClick(op)}
-            className="w-14 h-14 rounded-full bg-[var(--black-2)] border border-[var(--black-3)] font-mono-data text-xl text-white hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all duration-200"
-          >
-            {op === '*' ? '×' : op === '/' ? '÷' : op}
-          </button>
-        ))}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <button
-          onClick={handleClear}
-          className="px-6 py-2.5 rounded-lg bg-[var(--black-2)] border border-[var(--black-3)] text-[var(--black-6)] hover:text-white transition-all"
-        >
-          清除
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="px-8 py-2.5 rounded-lg bg-[var(--accent)] text-white font-medium hover:bg-[var(--accent-dark)] transition-all"
-        >
-          提交
-        </button>
-      </div>
-
-      {/* Message */}
-      {message && (
-        <div className={`mt-4 text-sm font-medium ${message === '正确!' ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-          {message}
+      <div className="math24-workbench">
+        <div className="math24-step-label"><span>当前数字</span><span>{cards.length} 个待组合</span></div>
+        <div className="math24-cards" aria-live="polite">
+          {cards.map(card => {
+            const selected = firstId === card.id;
+            return <button key={card.id} className={`math24-card${selected ? ' selected' : ''}${card.expression.includes('(') ? ' result' : ''}`} onClick={() => pickCard(card.id)} disabled={gameOver || solved} aria-pressed={selected}>
+              <strong>{format(card.value)}</strong>
+              {card.expression.includes('(') && <small>{card.expression}</small>}
+              {selected && <span className="math24-selected-tag">已选</span>}
+            </button>;
+          })}
+          {cards.length === 0 && <span className="math24-empty">准备数字中…</span>}
         </div>
-      )}
-    </div>
+
+        <div className="math24-operation-row">
+          <span>运算符</span>
+          <div className="math24-operators">
+            {operators.map(op => <button key={op} className={operator === op ? 'active' : ''} onClick={() => { if (firstId !== null && !gameOver && !solved) { setOperator(op); setMessage('再选另一个数字，完成这一步'); } }} disabled={firstId === null || gameOver || solved} aria-pressed={operator === op}>{op}</button>)}
+          </div>
+        </div>
+
+        <div className={`math24-message${solved ? ' success' : ''}`} role="status">{message}</div>
+        <div className="math24-actions"><button className="math24-undo" onClick={undo} disabled={history.length === 0 || gameOver || solved}>↶ <span>撤销一步</span></button><span>目标 <strong>24</strong></span></div>
+      </div>
+
+      <p className="math24-help">点击数字 → 选择 + − × ÷ → 点击另一个数字</p>
+      {history.length > 0 && <details className="math24-history"><summary>查看计算过程</summary><ol>{history.map((step, index) => <li key={index}>{step.filter(card => card.expression.includes('(')).slice(-1)[0]?.expression ?? '初始数字'}</li>)}</ol></details>}
+    </section>
   );
 }

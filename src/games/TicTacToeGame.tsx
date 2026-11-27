@@ -112,7 +112,9 @@ export default function TicTacToeGame({ level, config, onComplete, onFail }: Pro
 
   const s = Number(size) || 3;
   const w = Number(win) || 3;
-  const d = Number(depth) || 3;
+  // Depth 0 is the tutorial's deliberately weak AI; preserve it instead of
+  // treating it as a missing value and silently upgrading it to expert play.
+  const d = Math.max(0, Number(depth ?? 3));
 
   useEffect(() => {
     setBoard(Array(s * s).fill(null));

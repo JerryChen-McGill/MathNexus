@@ -34,7 +34,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 const errors = [];
 page.on('pageerror', e => errors.push(e.stack || e.message));
 page.on('console', m => { if (m.type() === 'error' && !m.text().includes('net::ERR')) errors.push(`${page.url()}: ${m.text()}`); });
-const ids = ['sudoku','math24','magic-square','sliding-puzzle','nim','number-race','number-bomb','number-pyramid','tangram','hanoi','minesweeper','tic-tac-toe','gomoku','einstein','river-crossing','bash-game','hundred-chicken','chicken-rabbit','sunzi','konigsberg','lighthouse'];
+const ids = ['sudoku','math24','magic-square','sliding-puzzle','nim','number-race','number-bomb','number-pyramid','tangram','hanoi','minesweeper','tic-tac-toe','gomoku','einstein','river-crossing','bash-game','hundred-chicken','chicken-rabbit','sunzi','konigsberg','lighthouse','bloxorz'];
 const goto = async path => { await page.goto(base + path, { waitUntil: 'domcontentloaded' }); await page.locator('main').waitFor(); await page.evaluate(() => new Promise(requestAnimationFrame)); };
 const overflow = async label => {
   const size = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: innerWidth }));

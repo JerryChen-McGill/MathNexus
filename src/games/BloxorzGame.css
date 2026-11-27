@@ -1,0 +1,37 @@
+.game-content > .bloxorz-game { max-width: 680px; margin: auto; padding: 26px; border-radius: 24px; color: #eff3ff; background: radial-gradient(ellipse at 50% 35%, #263651, #171a30 75%); box-shadow: 0 16px 40px #12183024; }
+.bloxorz-heading { text-align: center; }
+.bloxorz-heading > span { color: #ffbc7b; font-size: .7rem; font-weight: 750; letter-spacing: .16em; }
+.bloxorz-heading h2 { margin: 8px 0; font-size: 1.35rem; }
+.bloxorz-heading p, .bloxorz-help { color: #b4c3dc; font-size: .8rem; text-align: center; }
+.bloxorz-stats { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 18px; margin: 20px 0 0; font-size: .8rem; color: #bfcee3; }
+.bloxorz-stats strong { color: #ffce94; font-size: 1.2rem; }
+.bloxorz-pose { border: 1px solid #ffffff28; border-radius: 8px; padding: 2px 10px; }
+.bloxorz-board { width: 100%; max-width: 510px; margin: auto; touch-action: none; user-select: none; border-radius: 12px; }
+.bloxorz-board:focus-visible { outline: 2px solid #8ed6ff; outline-offset: 3px; }
+.bloxorz-board svg { display: block; width: 100%; max-height: 370px; overflow: visible; }
+.bloxorz-tile .top { fill: #4575a0; stroke: #243e5d; stroke-width: 1; }
+.bloxorz-tile .front { fill: #294968; }
+.bloxorz-tile .side { fill: #20394f; }
+.bloxorz-tile.fragile .top { fill: #bd5354; stroke: #e58b82; }
+.bloxorz-tile.goal .top { fill: #70d69c; stroke: #a7f6c6; }
+.bloxorz-hole { fill: #101c29; stroke: #c0fcd2; stroke-width: 1.5; }
+.bloxorz-crack { fill: #ffe2d9; text-anchor: middle; font-size: 20px; pointer-events: none; }
+.bloxorz-block polygon { stroke: #ffbd70; stroke-width: 1.4; stroke-linejoin: round; }
+.bloxorz-block .top { fill: #ffb156; }
+.bloxorz-block .front { fill: #df762d; }
+.bloxorz-block .side { fill: #a84923; }
+.bloxorz-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; color: #bfcee3; font-size: .73rem; }
+.bloxorz-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.bloxorz-legend i { width: 10px; height: 10px; border-radius: 2px; }
+.bloxorz-legend .solid { background: #4575a0; }.bloxorz-legend .fragile { background: #bd5354; }.bloxorz-legend .goal { background: #70d69c; }
+.bloxorz-pad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 48px); gap: 6px; justify-content: center; margin: 22px auto 14px; }
+.bloxorz-pad button { display: flex; align-items: center; justify-content: center; background: #334460; border: 1px solid #6982a4; border-radius: 12px; box-shadow: 0 3px 0 #0e1426; color: #fff; }
+.bloxorz-pad button:hover { background: #496181; }.bloxorz-pad button:active { transform: translateY(2px); box-shadow: none; }
+.bloxorz-pad .move-up { grid-column: 2; }.bloxorz-pad .move-left { grid-row: 2; grid-column: 1; }.bloxorz-pad .move-down { grid-row: 2; grid-column: 2; }.bloxorz-pad .move-right { grid-row: 2; grid-column: 3; }
+.bloxorz-actions { display: flex; justify-content: center; gap: 12px; }
+.bloxorz-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 14px; border: 1px solid #ffffff30; border-radius: 10px; background: #ffffff08; font-size: .8rem; }
+.bloxorz-actions button:disabled { opacity: .35; }
+.bloxorz-position { text-align: center; color: #dbe7fa; font-size: .8rem; margin: 14px 0 4px; }
+.bloxorz-rules { margin-top: 18px; border-color: #ffffff25; color: #bfcee3; font-size: .8rem; }
+.bloxorz-rules summary { color: #eef3ff; }.bloxorz-rules ul { list-style: disc; padding-left: 20px; line-height: 1.9; }
+@media (max-width: 600px) { .game-content > .bloxorz-game { padding: 18px 12px; border-radius: 18px; }.bloxorz-heading h2 { font-size: 1.15rem; }.bloxorz-stats { gap: 12px; }.bloxorz-board svg { max-height: 300px; } }

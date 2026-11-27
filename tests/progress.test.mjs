@@ -63,7 +63,7 @@ test('store ignores duplicate and stale session settlements across programs', as
   globalThis.localStorage = { getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, v), removeItem: k => memory.delete(k) };
   globalThis.window = { localStorage: globalThis.localStorage };
   const { useGameStore: store, levelCounts } = await import('../node_modules/.cache/mathnexus/store.mjs');
-  assert.equal(Object.keys(levelCounts).length, 21);
+  assert.equal(Object.keys(levelCounts).length, 22);
   assert.ok(Object.values(levelCounts).every(count => count === 10));
   store.getState().resetProgress();
   store.getState().startGame('a', 'sudoku'); store.getState().startGame('a', 'sudoku');
@@ -100,6 +100,18 @@ test('store ignores duplicate and stale session settlements across programs', as
   assert.equal(store.getState().playerName, '旧存档');
   assert.equal(store.getState().settings.theme, 'dark');
   assert.equal(JSON.parse(memory.get('mathnexus-save')).version, 5);
+
+  // Existing v5 saves predate Bloxorz: hydrate and settle the new game safely.
+  const oldSave = JSON.parse(memory.get('mathnexus-save'));
+  delete oldSave.state.gameProgress.bloxorz;
+  memory.set('mathnexus-save', JSON.stringify(oldSave));
+  await store.persist.rehydrate();
+  assert.equal(store.getState().gameProgress.bloxorz.highestLevel, 1);
+  assert.equal(store.getState().gameProgress.sudoku.levels['level-1'].bestScore, 80);
+  assert.equal(store.getState().rewards.xp, 80);
+  store.getState().startGame('new-game', 'bloxorz');
+  assert.equal(store.getState().completeLevel('new-game', 'bloxorz', 1, 1000, 15, 3), 20);
+  assert.equal(store.getState().gameProgress.bloxorz.highestLevel, 2);
 
   for (const token of ['Jerry Chen', 'JerryChen', 'Jenny Wang', 'JennyWang']) {
     store.getState().resetProgress();

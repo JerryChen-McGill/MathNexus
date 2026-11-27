@@ -1,4 +1,5 @@
 import { lighthouseLevels } from './lighthouse';
+import { bloxorzLevels } from './bloxorz';
 
 export type GameCategory = 'number' | 'geometry' | 'logic' | 'strategy' | 'classic';
 
@@ -56,7 +57,36 @@ export const categoryLabels: Record<GameCategory, string> = {
   classic: '古老经典',
 };
 
+const newPuzzleGames: GameInfo[] = [
+  ['water-pipes','水管工大冒险','旋转管道连接水源与出口。','geometry','normal','spatial-geo-1'],
+  ['shikaku','数方 Shikaku','用矩形覆盖棋盘，每个矩形包含一个数字且面积相符。','logic','normal','logic-reasoning-1'],
+  ['skyscraper','摩天楼谜题','根据边缘视线提示填入楼层高度。','logic','normal','logic-reasoning-1'],
+  ['nonogram','数织像素拼图','根据行列数字提示还原像素图案。','logic','normal','logic-reasoning-1'],
+  ['killer-sudoku','杀手数独','结合数独与虚线框求和规则。','number','hard','number-sense-2'],
+  ['kakuro','数和 Kakuro','填数满足连续区域的和与不重复规则。','number','hard','number-sense-2'],
+  ['hashi','数桥解谜','连接岛屿，使桥的数量符合数字并连通全图。','logic','normal','combinatorics-2'],
+  ['parking-lot','停车场规划游戏','移动车辆，为目标车规划驶出路线。','geometry','normal','algo-thinking-1'],
+  ['water-sort','彩色倒水大师','倒水整理颜色，让每个容器只装一种颜色。','logic','easy','algo-thinking-1'],
+  ['sliding-maze','滑行迷宫','在墙壁与通道间规划抵达出口的路线。','geometry','normal','spatial-geo-1'],
+  ['queens','皇后谜题','在棋盘上放置互不攻击的皇后。','logic','normal','logic-reasoning-1'],
+  ['water-jug','量杯大师','用量杯操作得到指定容量。','classic','normal','algebra-1'],
+  ['one-stroke','一笔画大师','不重复经过线段，一笔完成图形。','geometry','normal','combinatorics-1'],
+  ['paradox-garden','悖论花园','从线索与条件中找出满足规则的组合。','logic','hard','logic-reasoning-2'],
+  ['escape-room','密室逃脱','观察线索并推理出密码。','logic','normal','logic-reasoning-1'],
+  ['tango','符号逻辑 Tango','根据行列和相邻规则摆放符号。','logic','normal','logic-reasoning-1'],
+  ['lucky-draw','幸运摸球摊','用概率知识分析抽球结果。','number','easy','prob-stats-1'],
+  ['pinecone-battle','松果争夺战','轮流取松果，寻找制胜策略。','strategy','normal','game-theory-1'],
+  ['logic-fill','推理填格','结合线索逐格填写符合逻辑条件的数字。','logic','normal','logic-reasoning-1'],
+  ['puzzle-challenge','拼图挑战','移动拼图片段，还原完整图案。','geometry','normal','spatial-geo-1'],
+].map(([id,name,description,category,difficulty,skill]) => ({ id, name, description, category: category as GameCategory, categoryLabel: categoryLabels[category as GameCategory], difficulty: difficulty as GameInfo['difficulty'], image: assetPath('images/logic.jpg'), levels: 10, unlockedLevel: 1, completedLevels: 0, totalStars: 0, skills: [skill] }));
+
 export const games: GameInfo[] = [
+  {
+    id: 'bloxorz', name: 'Bloxorz 块推', description: '翻转长方体，绕过脆弱地砖，竖直落入终点洞。',
+    category: 'geometry', categoryLabel: '几何与拼图', difficulty: 'normal',
+    image: assetPath('images/bloxorz.svg'), levels: 10, unlockedLevel: 1,
+    completedLevels: 0, totalStars: 0, skills: ['spatial-geo-1', 'algo-thinking-1'],
+  },
   {
     id: 'lighthouse', name: '灯塔解谜', description: '放置灯塔照亮所有白格，在光与影之间寻找逻辑。',
     category: 'logic', categoryLabel: '逻辑与推理', difficulty: 'normal',
@@ -343,6 +373,7 @@ export const games: GameInfo[] = [
     totalStars: 0,
     skills: ['combinatorics-2', 'combinatorics-3'],
   },
+  ...newPuzzleGames,
 ];
 
 export const skillBranches = [
@@ -401,6 +432,7 @@ export const skillNodes: SkillNode[] = [
 ];
 
 export const levelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> = {
+  bloxorz: bloxorzLevels.map(puzzle => ({ name: puzzle.name, params: { timeLimit: 0 } })),
   lighthouse: lighthouseLevels.map((puzzle, i) => ({ name: puzzle.name, params: { size: i + 2, timeLimit: 0 } })),
   'number-pyramid': [
     { name: '数塔初识', params: { size: 3, timeLimit: 0 } },
@@ -439,16 +471,16 @@ export const levelConfigs: Record<string, Array<{ name: string; params: Record<s
     { name: '24点之神', params: { maxNum: 50, questions: 10, timeLimit: 120 } },
   ],
   'magic-square': [
-    { name: '洛书之谜', params: { size: 3, prefill: 4, timeLimit: 0 } },
-    { name: '三阶入门', params: { size: 3, prefill: 3, timeLimit: 600 } },
-    { name: '三阶挑战', params: { size: 3, prefill: 1, timeLimit: 480 } },
-    { name: '四阶入门', params: { size: 4, prefill: 6, timeLimit: 900 } },
-    { name: '四阶进阶', params: { size: 4, prefill: 4, timeLimit: 720 } },
-    { name: '五阶挑战', params: { size: 5, prefill: 8, timeLimit: 1200 } },
-    { name: '六阶大师', params: { size: 6, prefill: 10, timeLimit: 1500 } },
-    { name: '七阶极限', params: { size: 7, prefill: 12, timeLimit: 1800 } },
-    { name: '八阶噩梦', params: { size: 8, prefill: 14, timeLimit: 2100 } },
-    { name: '幻方之神', params: { size: 9, prefill: 16, timeLimit: 2400 } },
+    { name: '洛书之谜', params: { size: 3, prefill: 6, timeLimit: 0 } },
+    { name: '三阶入门', params: { size: 3, prefill: 5, timeLimit: 900 } },
+    { name: '三阶挑战', params: { size: 3, prefill: 3, timeLimit: 720 } },
+    { name: '五阶初试', params: { size: 5, prefill: 18, timeLimit: 1500 } },
+    { name: '五阶练习', params: { size: 5, prefill: 15, timeLimit: 1320 } },
+    { name: '五阶进阶', params: { size: 5, prefill: 12, timeLimit: 1200 } },
+    { name: '五阶大师', params: { size: 5, prefill: 10, timeLimit: 1080 } },
+    { name: '七阶挑战', params: { size: 7, prefill: 28, timeLimit: 2100 } },
+    { name: '七阶极限', params: { size: 7, prefill: 24, timeLimit: 1800 } },
+    { name: '幻方之神', params: { size: 7, prefill: 20, timeLimit: 1500 } },
   ],
   'sliding-puzzle': [
     { name: '2×2热身', params: { size: 2, shuffle: 10, timeLimit: 0 } },
@@ -465,26 +497,26 @@ export const levelConfigs: Record<string, Array<{ name: string; params: Record<s
   'minesweeper': [
     { name: '扫雷教学', params: { width: 5, height: 5, mines: 3, timeLimit: 0 } },
     { name: '基础训练', params: { width: 8, height: 8, mines: 10, timeLimit: 600 } },
-    { name: '初级挑战', params: { width: 9, height: 9, mines: 10, timeLimit: 480 } },
+    { name: '初级挑战', params: { width: 9, height: 9, mines: 10, timeLimit: 600 } },
+    { name: '九阶进阶', params: { width: 9, height: 9, mines: 15, timeLimit: 600 } },
+    { name: '中级入门', params: { width: 16, height: 16, mines: 30, timeLimit: 900 } },
     { name: '中级挑战', params: { width: 16, height: 16, mines: 40, timeLimit: 900 } },
-    { name: '高级挑战', params: { width: 16, height: 16, mines: 40, timeLimit: 600 } },
-    { name: '专家级', params: { width: 30, height: 16, mines: 99, timeLimit: 1200 } },
-    { name: '极速专家', params: { width: 30, height: 16, mines: 99, timeLimit: 900 } },
-    { name: '地狱模式', params: { width: 30, height: 16, mines: 99, timeLimit: 600 } },
-    { name: '自定义噩梦', params: { width: 30, height: 16, mines: 150, timeLimit: 900 } },
-    { name: '扫雷之神', params: { width: 30, height: 16, mines: 200, timeLimit: 600 } },
+    { name: '中级专家', params: { width: 16, height: 16, mines: 50, timeLimit: 840 } },
+    { name: '专家入门', params: { width: 30, height: 16, mines: 70, timeLimit: 1200 } },
+    { name: '专家挑战', params: { width: 30, height: 16, mines: 85, timeLimit: 1100 } },
+    { name: '专家级', params: { width: 30, height: 16, mines: 99, timeLimit: 1000 } },
   ],
   'tic-tac-toe': [
     { name: '新手教程', params: { size: 3, win: 3, depth: 0 } },
     { name: '初级对战', params: { size: 3, win: 3, depth: 1 } },
     { name: '中级挑战', params: { size: 3, win: 3, depth: 2 } },
     { name: '高级对战', params: { size: 3, win: 3, depth: 3 } },
-    { name: '不可能难度', params: { size: 3, win: 3, depth: 9 } },
+    { name: '策略挑战', params: { size: 3, win: 3, depth: 4 } },
     { name: '4×4变体', params: { size: 4, win: 3, depth: 2 } },
     { name: '4×4四连', params: { size: 4, win: 4, depth: 3 } },
     { name: '5×5五连', params: { size: 5, win: 4, depth: 3 } },
     { name: '大棋盘', params: { size: 5, win: 5, depth: 3 } },
-    { name: '井字棋大师', params: { size: 3, win: 3, depth: 9 } },
+    { name: '井字棋大师', params: { size: 3, win: 3, depth: 4 } },
   ],
   'gomoku': [
     { name: '入门教学', params: { size: 15, win: 5, depth: 1 } },
@@ -642,4 +674,5 @@ export const levelConfigs: Record<string, Array<{ name: string; params: Record<s
     { name: '极限网络', params: { bridges: 20, nodes: 10, timeLimit: 600 } },
     { name: '图论之神', params: { bridges: 25, nodes: 12, timeLimit: 720 } },
   ],
+  ...Object.fromEntries(['water-pipes','shikaku','skyscraper','nonogram','killer-sudoku','kakuro','hashi','parking-lot','water-sort','sliding-maze','queens','water-jug','one-stroke','paradox-garden','escape-room','tango','lucky-draw','pinecone-battle','logic-fill','puzzle-challenge'].map(id => [id, Array.from({ length: 10 }, (_, i) => ({ name: ['入门','基础练习','进阶挑战','路线规划','逻辑训练','限时挑战','复杂变体','专家挑战','极限挑战','大师关'][i], params: { level: i + 1, timeLimit: i < 2 ? 0 : 300 + i * 60 } }))])),
 };
