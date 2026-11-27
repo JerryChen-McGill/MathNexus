@@ -8,7 +8,7 @@ import './LighthouseGame.css';
 
 interface Props { level: number; elapsedTime: number; onComplete: (score: number, stars: number) => void }
 export default function LighthouseGame({ level, elapsedTime, onComplete }: Props) {
-  const puzzle = lighthouseLevels[level - 1];
+  const puzzle = lighthouseLevels[(level - 1) % lighthouseLevels.length];
   const size = puzzle.rows.length;
   const [history, setHistory] = useState<LighthouseMark[][]>(() => [Array(size * size).fill(null)]);
   const [cursor, setCursor] = useState(0);

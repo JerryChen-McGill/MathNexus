@@ -78,19 +78,19 @@ const newPuzzleGames: GameInfo[] = [
   ['pinecone-battle','松果争夺战','轮流取松果，寻找制胜策略。','strategy','normal','game-theory-1'],
   ['logic-fill','推理填格','结合线索逐格填写符合逻辑条件的数字。','logic','normal','logic-reasoning-1'],
   ['puzzle-challenge','拼图挑战','移动拼图片段，还原完整图案。','geometry','normal','spatial-geo-1'],
-].map(([id,name,description,category,difficulty,skill]) => ({ id, name, description, category: category as GameCategory, categoryLabel: categoryLabels[category as GameCategory], difficulty: difficulty as GameInfo['difficulty'], image: assetPath('images/logic.jpg'), levels: 10, unlockedLevel: 1, completedLevels: 0, totalStars: 0, skills: [skill] }));
+].map(([id,name,description,category,difficulty,skill]) => ({ id, name, description, category: category as GameCategory, categoryLabel: categoryLabels[category as GameCategory], difficulty: difficulty as GameInfo['difficulty'], image: assetPath('images/logic.jpg'), levels: 65, unlockedLevel: 1, completedLevels: 0, totalStars: 0, skills: [skill] }));
 
 export const games: GameInfo[] = [
   {
     id: 'bloxorz', name: 'Bloxorz 块推', description: '翻转长方体，绕过脆弱地砖，竖直落入终点洞。',
     category: 'geometry', categoryLabel: '几何与拼图', difficulty: 'normal',
-    image: assetPath('images/bloxorz.svg'), levels: 10, unlockedLevel: 1,
+    image: assetPath('images/bloxorz.svg'), levels: 65, unlockedLevel: 1,
     completedLevels: 0, totalStars: 0, skills: ['spatial-geo-1', 'algo-thinking-1'],
   },
   {
     id: 'lighthouse', name: '灯塔解谜', description: '放置灯塔照亮所有白格，在光与影之间寻找逻辑。',
     category: 'logic', categoryLabel: '逻辑与推理', difficulty: 'normal',
-    image: assetPath('images/lighthouse.svg'), levels: 10, unlockedLevel: 1,
+    image: assetPath('images/lighthouse.svg'), levels: 65, unlockedLevel: 1,
     completedLevels: 0, totalStars: 0, skills: ['logic-reasoning-1', 'spatial-geo-1'],
   },
   {
@@ -101,7 +101,7 @@ export const games: GameInfo[] = [
     categoryLabel: '数字与算术',
     difficulty: 'normal',
     image: assetPath('images/sudoku.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -115,7 +115,7 @@ export const games: GameInfo[] = [
     categoryLabel: '数字与算术',
     difficulty: 'easy',
     image: assetPath('images/math24.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -129,7 +129,7 @@ export const games: GameInfo[] = [
     categoryLabel: '数字与算术',
     difficulty: 'normal',
     image: assetPath('images/magic_square.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -143,7 +143,7 @@ export const games: GameInfo[] = [
     categoryLabel: '数字与算术',
     difficulty: 'normal',
     image: assetPath('images/sliding_puzzle.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -157,7 +157,7 @@ export const games: GameInfo[] = [
     categoryLabel: '博弈与策略',
     difficulty: 'hard',
     image: assetPath('images/nim.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -171,7 +171,7 @@ export const games: GameInfo[] = [
     categoryLabel: '博弈与策略',
     difficulty: 'normal',
     image: assetPath('images/math24.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -185,7 +185,7 @@ export const games: GameInfo[] = [
     categoryLabel: '数字与算术',
     difficulty: 'easy',
     image: assetPath('images/sudoku.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -199,7 +199,7 @@ export const games: GameInfo[] = [
     categoryLabel: '数字与算术',
     difficulty: 'easy',
     image: assetPath('images/magic_square.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -213,7 +213,7 @@ export const games: GameInfo[] = [
     categoryLabel: '几何与拼图',
     difficulty: 'normal',
     image: assetPath('images/tangram.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -227,7 +227,7 @@ export const games: GameInfo[] = [
     categoryLabel: '几何与拼图',
     difficulty: 'normal',
     image: assetPath('images/hanoi.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -241,7 +241,7 @@ export const games: GameInfo[] = [
     categoryLabel: '逻辑与推理',
     difficulty: 'normal',
     image: assetPath('images/minesweeper.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -255,7 +255,7 @@ export const games: GameInfo[] = [
     categoryLabel: '博弈与策略',
     difficulty: 'easy',
     image: assetPath('images/gomoku.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -269,7 +269,7 @@ export const games: GameInfo[] = [
     categoryLabel: '博弈与策略',
     difficulty: 'hard',
     image: assetPath('images/gomoku.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -283,7 +283,7 @@ export const games: GameInfo[] = [
     categoryLabel: '逻辑与推理',
     difficulty: 'hard',
     image: assetPath('images/logic.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -297,7 +297,7 @@ export const games: GameInfo[] = [
     categoryLabel: '逻辑与推理',
     difficulty: 'normal',
     image: assetPath('images/logic.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -311,7 +311,7 @@ export const games: GameInfo[] = [
     categoryLabel: '博弈与策略',
     difficulty: 'normal',
     image: assetPath('images/nim.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -325,7 +325,7 @@ export const games: GameInfo[] = [
     categoryLabel: '古老经典',
     difficulty: 'normal',
     image: assetPath('images/classic.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -339,7 +339,7 @@ export const games: GameInfo[] = [
     categoryLabel: '古老经典',
     difficulty: 'easy',
     image: assetPath('images/classic.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -353,7 +353,7 @@ export const games: GameInfo[] = [
     categoryLabel: '古老经典',
     difficulty: 'hard',
     image: assetPath('images/classic.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -367,7 +367,7 @@ export const games: GameInfo[] = [
     categoryLabel: '古老经典',
     difficulty: 'normal',
     image: assetPath('images/logic.jpg'),
-    levels: 10,
+    levels: 65,
     unlockedLevel: 1,
     completedLevels: 0,
     totalStars: 0,
@@ -431,7 +431,7 @@ export const skillNodes: SkillNode[] = [
   { id: 'algo-thinking-4', name: '递归大师', description: '精通递归思维与应用', branch: '算法思维', branchColor: '#F97316', level: 0, maxLevel: 5, unlocked: false, unlockable: false, parentIds: ['algo-thinking-3'], gameIds: ['hanoi', 'sliding-puzzle'], cost: 4 },
 ];
 
-export const levelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> = {
+const baseLevelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> = {
   bloxorz: bloxorzLevels.map(puzzle => ({ name: puzzle.name, params: { timeLimit: 0 } })),
   lighthouse: lighthouseLevels.map((puzzle, i) => ({ name: puzzle.name, params: { size: i + 2, timeLimit: 0 } })),
   'number-pyramid': [
@@ -676,3 +676,27 @@ export const levelConfigs: Record<string, Array<{ name: string; params: Record<s
   ],
   ...Object.fromEntries(['water-pipes','shikaku','skyscraper','nonogram','killer-sudoku','kakuro','hashi','parking-lot','water-sort','sliding-maze','queens','water-jug','one-stroke','paradox-garden','escape-room','tango','lucky-draw','pinecone-battle','logic-fill','puzzle-challenge'].map(id => [id, Array.from({ length: 10 }, (_, i) => ({ name: ['入门','基础练习','进阶挑战','路线规划','逻辑训练','限时挑战','复杂变体','专家挑战','极限挑战','大师关'][i], params: { level: i + 1, timeLimit: i < 2 ? 0 : 300 + i * 60 } }))])),
 };
+
+export const chapterNames = ['幼儿园', '小学生', '中学生', '高中生', '大学生', '研究生', '博士生', '博士后', '副教授', '教授', '数学家', '天才', '数学之王'];
+
+// Each rank is a chapter with five stages. Existing puzzle families provide the
+// first ten difficulty templates; later ranks build on the hardest template.
+export const levelConfigs: Record<string, Array<{ name: string; params: Record<string, number | string | boolean> }>> =
+  Object.fromEntries(Object.entries(baseLevelConfigs).map(([gameId, templates]) => [gameId,
+    Array.from({ length: chapterNames.length * 5 }, (_, index) => {
+      const chapter = Math.floor(index / 5);
+      const stage = index % 5;
+      const templateIndex = Math.min(templates.length - 1, chapter);
+      const template = templates[templateIndex];
+      const params = { ...template.params };
+      // Extend scalable count/size challenges beyond the original ten templates.
+      // Small steps keep generated boards playable while increasing the ceiling.
+      const extraRanks = Math.max(0, chapter - (templates.length - 1));
+      if (extraRanks) {
+        for (const key of ['size', 'disks', 'piles', 'mines', 'bridges', 'nodes', 'clues', 'attrs', 'maxStones', 'total', 'max', 'maxNum', 'shuffle']) {
+          if (typeof params[key] === 'number') params[key] = params[key] + extraRanks + Math.floor(stage / 2);
+        }
+      }
+      return { name: `${chapterNames[chapter]} · ${stage + 1}`, params };
+    }),
+  ]));

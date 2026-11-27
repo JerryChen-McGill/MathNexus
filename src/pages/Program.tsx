@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { BookOpen, Check, ChevronDown, Flag, Lock, Sparkles, Trophy } from 'lucide-react';
-import { games, levelConfigs } from '@/data/games';
+import { chapterNames, games, levelConfigs } from '@/data/games';
 import { quickRules } from '@/data/programs';
 import { useGameStore } from '@/store/gameStore';
 import ProgramPicker from '@/components/ProgramPicker';
@@ -38,7 +38,7 @@ function ProgramPath({ gameId }: { gameId: string }) {
       <div className="chapters">
         {Array.from({ length: Math.ceil(levels.length / 5) }, (_, i) => i + 1).map(ch => <section className="chapter" key={ch}>
           <button className="chapter-title" aria-expanded={chapter === ch} onClick={() => setChapter(chapter === ch ? 0 : ch)}>
-            <span><small>第 {ch} 章</small><strong>{ch === 1 ? '好奇心出发' : '发现更多可能'}</strong></span>
+            <span><small>第 {ch} 章</small><strong>{chapterNames[ch - 1]}</strong></span>
             {hasBadge(progress.levels, ch, levels.length) ? <Trophy size={22}/> : <ChevronDown className={chapter === ch ? 'rotate-180' : ''} size={22}/>}
           </button>
           {chapter === ch && <div className="level-path">

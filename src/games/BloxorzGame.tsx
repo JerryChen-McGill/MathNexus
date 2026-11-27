@@ -30,7 +30,7 @@ function Cuboid({ col, row, width = 1, depth = 1, height, kind }: { col: number;
 
 interface Props { level: number; elapsedTime: number; onComplete: (score: number, stars: number) => void; onFail: (reason: string) => void }
 export default function BloxorzGame({ level, elapsedTime, onComplete, onFail }: Props) {
-  const puzzle = bloxorzLevels[level - 1];
+  const puzzle = bloxorzLevels[(level - 1) % bloxorzLevels.length];
   const start: BlockPose = { row: puzzle.start[0], col: puzzle.start[1], orientation: 'standing' };
   const [history, setHistory] = useState<BlockPose[]>([start]);
   const historyRef = useRef(history);
